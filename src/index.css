@@ -1,3 +1,44 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--tg-theme-bg-color, #fff);
+  color: var(--tg-theme-text-color, #000);
+  font-family: var(--font-family);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-telegram-button text-telegram-buttonText rounded-full py-3 px-5 font-medium text-center transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md active:scale-[0.98];
+  }
+  
+  .btn-secondary {
+    @apply bg-telegram-secondary text-telegram-text rounded-full py-3 px-5 font-medium text-center transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-200 active:scale-[0.98];
+  }
+  
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-200 hover:shadow-md;
+  }
+  
+  .input {
+    @apply bg-gray-50 dark:bg-gray-700 text-telegram-text dark:text-white border border-gray-200 dark:border-gray-600 rounded-lg py-3 px-4 w-full focus:outline-none focus:ring-2 focus:ring-telegram-button focus:border-transparent transition-all duration-200;
+  }
+}
