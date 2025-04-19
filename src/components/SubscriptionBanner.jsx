@@ -4,14 +4,16 @@ import { useApp } from '../contexts/AppContext';
 import { getSubscriptionPlans, createSubscription, checkSubscription } from '../services/api';
 
 const SubscriptionBanner = () => {
-  const { user, isDevMode } = useApp();
+  const { user, isDevMode, refreshUserData } = useApp();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPlans, setShowPlans] = useState(false);
   const [plans, setPlans] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [paymentUrl, setPaymentUrl] = useState('');
+  const [showPaymentInstructions, setShowPaymentInstructions] = useState(false);
 
-  // Load subscription plans
+  // Загрузка планов подписки
   useEffect(() => {
     const loadPlans = async () => {
       try {
@@ -27,12 +29,52 @@ const SubscriptionBanner = () => {
     loadPlans();
   }, []);
 
+  // Проверка статуса оплаты при возвращении в приложение
+  useEffect(() => {
+    const checkPaymentOnResume = async () => {
+      try {
+        const paymentToken = localStorage.getItem('paymentToken');
+        if (paymentToken) {
+          console.log('Checking payment status...');
+          const result = await checkSubscription({
+            telegram_id: user.telegram_id
+          });
+          
+          if (result.success && result.subscription.active) {
+            localStorage.removeItem('paymentToken');
+            WebApp.showPopup({
+              title: "Поздравляем!",
+              message: "Подписка успешно активирована!",
+              buttons: [{ type: "ok" }]
+            });
+            refreshUserData();
+          }
+        }
+      } catch (err) {
+        console.error('Error checking payment:', err);
+      }
+    };
+
+    // Событие на возвращение в приложение
+    window.addEventListener('focus', checkPaymentOnResume);
+    
+    // Проверяем сразу при загрузке
+    checkPaymentOnResume();
+    
+    return () => {
+      window.removeEventListener('focus', checkPaymentOnResume);
+    };
+  }, [user.telegram_id, refreshUserData]);
+
   const handleOpenPlans = () => {
     setShowPlans(true);
   };
 
   const handleClosePlans = () => {
     setShowPlans(false);
+    setSelectedPlan(null);
+    setPaymentUrl('');
+    setShowPaymentInstructions(false);
   };
 
   const handleSelectPlan = (planId) => {
@@ -50,26 +92,28 @@ const SubscriptionBanner = () => {
       setError('');
       
       if (isDevMode) {
-        alert('В режиме разработки подписка не доступна');
+        WebApp.showPopup({
+          title: "Режим разработки",
+          message: "В режиме разработки подписка недоступна",
+          buttons: [{ type: "ok" }]
+        });
         setLoading(false);
         return;
       }
       
-      // Create subscription
+      // Создаем подписку
       const result = await createSubscription({
         telegram_id: user.telegram_id,
         plan_id: selectedPlan
       });
       
       if (result.success && result.payment_url) {
-        // Save payment token for later verification
+        // Сохраняем токен для последующей проверки
         localStorage.setItem('paymentToken', result.payment_token);
         
-        // Open Telegram payment link
-        WebApp.openTelegramLink(result.payment_url);
-        
-        // Check payment status when user returns
-        window.addEventListener('focus', checkPaymentStatus);
+        // Показываем инструкции вместо прямого открытия
+        setPaymentUrl(result.payment_url);
+        setShowPaymentInstructions(true);
       } else {
         setError(result.error || 'Не удалось создать подписку');
       }
@@ -81,33 +125,72 @@ const SubscriptionBanner = () => {
     }
   };
   
-  const checkPaymentStatus = async () => {
-    try {
-      window.removeEventListener('focus', checkPaymentStatus);
-      
-      // Check subscription status
-      const result = await checkSubscription({
-        telegram_id: user.telegram_id
-      });
-      
-      if (result.success && result.subscription.active) {
-        // Refresh page to update UI
-        window.location.reload();
+  // Компонент с инструкциями по оплате
+  const PaymentInstructions = () => {
+    const copyToClipboard = () => {
+      navigator.clipboard.writeText(paymentUrl)
+        .then(() => {
+          WebApp.showPopup({
+            title: "Успех!",
+            message: "Ссылка скопирована. Вставьте её в чат и нажмите на неё",
+            buttons: [{ type: "ok" }]
+          });
+        })
+        .catch(err => {
+          console.error('Ошибка при копировании:', err);
+          WebApp.showAlert("Не удалось скопировать ссылку. Пожалуйста, скопируйте её вручную: " + paymentUrl);
+        });
+    };
+    
+    const directOpen = () => {
+      try {
+        // Пробуем открыть напрямую - это может не сработать, поэтому в блоке try-catch
+        WebApp.openTelegramLink(paymentUrl);
+      } catch (e) {
+        console.error('Error opening link directly:', e);
+        WebApp.showAlert("Не удалось открыть ссылку напрямую. Пожалуйста, воспользуйтесь методом копирования.");
       }
-    } catch (err) {
-      console.error('Error checking payment status:', err);
-    }
+    };
+    
+    return (
+      <div className="mt-4 p-4 border border-blue-300 rounded-lg bg-blue-50 dark:bg-blue-900/30">
+        <h4 className="font-medium mb-2">Инструкция по оплате:</h4>
+        <ol className="list-decimal list-inside space-y-2 text-sm">
+          <li>Скопируйте ссылку на оплату</li>
+          <li>Вернитесь в Telegram</li>
+          <li>Вставьте ссылку в любой чат и нажмите на неё</li>
+          <li>Следуйте инструкциям бота для оплаты</li>
+          <li>После оплаты вернитесь в это приложение</li>
+        </ol>
+        
+        <div className="mt-4 flex flex-col gap-2">
+          <button 
+            onClick={copyToClipboard}
+            className="btn-primary text-sm"
+          >
+            Скопировать ссылку на оплату
+          </button>
+          
+          <button 
+            onClick={directOpen}
+            className="btn-secondary text-sm"
+          >
+            Открыть напрямую (может не работать)
+          </button>
+          
+          <button 
+            onClick={() => setShowPaymentInstructions(false)}
+            className="btn-text text-sm"
+          >
+            Вернуться к выбору плана
+          </button>
+        </div>
+      </div>
+    );
   };
   
-  // Handler for "go back" after viewing plans
-  const handleBack = () => {
-    setShowPlans(false);
-    setSelectedPlan(null);
-    setError('');
-  };
-  
+  // Если подписка активна
   if (user?.subscription_active) {
-    // Display active subscription
     const endDate = new Date(user.subscription_end_date);
     const formattedDate = endDate.toLocaleDateString('ru-RU', {
       day: 'numeric',
@@ -155,13 +238,14 @@ const SubscriptionBanner = () => {
     );
   }
   
+  // Если показываем планы
   if (showPlans) {
     return (
       <div className="card mb-6 border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-semibold text-blue-800 dark:text-blue-300">Выберите план подписки</h3>
           <button 
-            onClick={handleBack}
+            onClick={handleClosePlans}
             className="text-gray-500 hover:text-gray-700"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -170,74 +254,82 @@ const SubscriptionBanner = () => {
           </button>
         </div>
         
-        {plans && (
-          <div className="space-y-3 mb-4">
-            {Object.values(plans).map(plan => (
-              <div 
-                key={plan.id}
-                className={`border rounded-lg p-3 cursor-pointer transition-all ${
-                  selectedPlan === plan.id 
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' 
-                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
-                }`}
-                onClick={() => handleSelectPlan(plan.id)}
-              >
-                <div className="flex items-center">
-                  <div className="flex-1">
+        {/* Показываем инструкции по оплате или список планов */}
+        {showPaymentInstructions ? (
+          <PaymentInstructions />
+        ) : (
+          <>
+            {plans && (
+              <div className="space-y-3 mb-4">
+                {Object.values(plans).map(plan => (
+                  <div 
+                    key={plan.id}
+                    className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                      selectedPlan === plan.id 
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' 
+                        : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                    }`}
+                    onClick={() => handleSelectPlan(plan.id)}
+                  >
                     <div className="flex items-center">
-                      <h4 className="font-medium">{plan.name}</h4>
-                      {plan.discount && (
-                        <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                          -{plan.discount}%
-                        </span>
-                      )}
+                      <div className="flex-1">
+                        <div className="flex items-center">
+                          <h4 className="font-medium">{plan.name}</h4>
+                          {plan.discount && (
+                            <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                              -{plan.discount}%
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{plan.description}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold">{plan.price} ⭐</div>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{plan.description}</p>
                   </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold">{plan.price} ⭐</div>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+            
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+            
+            <div className="flex gap-3">
+              <button
+                onClick={handleClosePlans}
+                className="btn-secondary flex-1"
+                disabled={loading}
+              >
+                Назад
+              </button>
+              
+              <button
+                onClick={handleSubscribe}
+                className="btn-primary flex-1"
+                disabled={loading || !selectedPlan}
+              >
+                {loading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Оформление...
+                  </>
+                ) : 'Оформить подписку'}
+              </button>
+            </div>
+          </>
         )}
-        
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 rounded-lg text-sm">
-            {error}
-          </div>
-        )}
-        
-        <div className="flex gap-3">
-          <button
-            onClick={handleBack}
-            className="btn-secondary flex-1"
-            disabled={loading}
-          >
-            Назад
-          </button>
-          
-          <button
-            onClick={handleSubscribe}
-            className="btn-primary flex-1"
-            disabled={loading || !selectedPlan}
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Оформление...
-              </>
-            ) : 'Оформить подписку'}
-          </button>
-        </div>
       </div>
     );
   }
   
+  // Базовый вид баннера (без подписки и не в режиме выбора плана)
   return (
     <div className="card mb-6 border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700">
       <div className="flex flex-col md:flex-row md:items-center gap-4">
