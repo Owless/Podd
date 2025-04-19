@@ -79,6 +79,20 @@ export const getProductInfo = async (articleId) => {
   }
 };
 // Get subscription plans
+export const getUserInfo = async (telegramId) => {
+  try {
+    const response = await api.get(`/api/users/info?telegram_id=${telegramId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user info:', error);
+    return {
+      success: false,
+      error: error.response?.data?.error || error.message,
+    };
+  }
+};
+
+// Получить планы подписки
 export const getSubscriptionPlans = async () => {
   try {
     const response = await api.get('/api/subscription/plans');
@@ -92,7 +106,7 @@ export const getSubscriptionPlans = async () => {
   }
 };
 
-// Create subscription
+// Создать подписку
 export const createSubscription = async (data) => {
   try {
     const response = await api.post('/api/subscription/create', data);
@@ -106,7 +120,7 @@ export const createSubscription = async (data) => {
   }
 };
 
-// Check subscription status
+// Проверить статус подписки
 export const checkSubscription = async (data) => {
   try {
     const response = await api.post('/api/subscription/check', data);
