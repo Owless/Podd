@@ -83,3 +83,15 @@ export const useApp = () => {
   }
   return context;
 };
+const refreshUserData = async () => {
+  if (!user || !user.telegram_id) return;
+  
+  try {
+    const userData = await getUserInfo(user.telegram_id);
+    if (userData.success) {
+      setUser(userData.user);
+    }
+  } catch (error) {
+    console.error('Error refreshing user data:', error);
+  }
+};
