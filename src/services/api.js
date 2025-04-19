@@ -78,6 +78,21 @@ export const getProductInfo = async (articleId) => {
     };
   }
 };
+// Get subscription plans
+export const getSubscriptionPlans = async () => {
+  try {
+    const response = await api.get('/api/subscription/plans');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching subscription plans:', error);
+    return {
+      success: false,
+      error: error.response?.data?.error || error.message,
+    };
+  }
+};
+
+// Create subscription
 export const createSubscription = async (data) => {
   try {
     const response = await api.post('/api/subscription/create', data);
@@ -91,7 +106,7 @@ export const createSubscription = async (data) => {
   }
 };
 
-// Проверка статуса подписки
+// Check subscription status
 export const checkSubscription = async (data) => {
   try {
     const response = await api.post('/api/subscription/check', data);
