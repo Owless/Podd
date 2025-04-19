@@ -6,11 +6,6 @@ export const AppProvider = ({ children }) => {
   
 return (
   <AppContext.Provider value={{ 
-    user, 
-    setUser, 
-    isLoading,
-    isDevMode,
-    refreshUserData // Добавьте эту функцию
   }}>
     {children}
   </AppContext.Provider>
