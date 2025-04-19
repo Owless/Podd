@@ -8,6 +8,7 @@ const AddItemForm = ({ onItemAdded }) => {
   const [desiredPrice, setDesiredPrice] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,6 +31,7 @@ const AddItemForm = ({ onItemAdded }) => {
       if (result.success) {
         setUrl('');
         setDesiredPrice('');
+        setIsExpanded(false);
         onItemAdded(result.item);
       } else {
         setError(result.error || 'Не удалось добавить товар');
@@ -42,13 +44,37 @@ const AddItemForm = ({ onItemAdded }) => {
     }
   };
 
+  if (!isExpanded) {
+    return (
+      <button 
+        onClick={() => setIsExpanded(true)} 
+        className="btn-primary w-full mb-6 py-4"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        Добавить товар для отслеживания
+      </button>
+    );
+  }
+
   return (
-    <div className="card">
-      <h2 className="text-lg font-semibold mb-4">Добавить товар</h2>
+    <div className="card mb-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">Добавление товара</h2>
+        <button 
+          onClick={() => setIsExpanded(false)}
+          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors duration-200"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
       
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label htmlFor="url" className="block mb-1 text-sm font-medium">
+          <label htmlFor="url" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             URL или артикул Wildberries
           </label>
           <input
@@ -62,8 +88,8 @@ const AddItemForm = ({ onItemAdded }) => {
           />
         </div>
         
-        <div className="mb-4">
-          <label htmlFor="desiredPrice" className="block mb-1 text-sm font-medium">
+        <div className="mb-5">
+          <label htmlFor="desiredPrice" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             Желаемая цена (опционально)
           </label>
           <input
@@ -81,16 +107,37 @@ const AddItemForm = ({ onItemAdded }) => {
         </div>
         
         {error && (
-          <div className="mb-4 text-red-500 text-sm">{error}</div>
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 rounded-lg text-sm">
+            {error}
+          </div>
         )}
         
-        <button
-          type="submit"
-          className="btn-primary w-full"
-          disabled={loading}
-        >
-          {loading ? 'Добавление...' : 'Добавить товар'}
-        </button>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            className="btn-secondary flex-1"
+            onClick={() => setIsExpanded(false)}
+            disabled={loading}
+          >
+            Отмена
+          </button>
+          
+          <button
+            type="submit"
+            className="btn-primary flex-1"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Добавление...
+              </>
+            ) : 'Добавить товар'}
+          </button>
+        </div>
       </form>
     </div>
   );
