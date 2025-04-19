@@ -78,3 +78,29 @@ export const getProductInfo = async (articleId) => {
     };
   }
 };
+export const createSubscription = async (data) => {
+  try {
+    const response = await api.post('/api/subscription/create', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating subscription:', error);
+    return {
+      success: false,
+      error: error.response?.data?.error || error.message,
+    };
+  }
+};
+
+// Проверка статуса подписки
+export const checkSubscription = async (data) => {
+  try {
+    const response = await api.post('/api/subscription/check', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error checking subscription:', error);
+    return {
+      success: false,
+      error: error.response?.data?.error || error.message,
+    };
+  }
+};
