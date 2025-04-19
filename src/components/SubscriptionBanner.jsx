@@ -81,49 +81,46 @@ const SubscriptionBanner = () => {
     setSelectedPlan(planId);
   };
 
-  const handleSubscribe = async () => {
-    if (!selectedPlan) {
-      setError('Выберите план подписки');
+ const handleSubscribe = async () => {
+  if (!selectedPlan) {
+    setError('Выберите план подписки');
+    return;
+  }
+  
+  try {
+    setLoading(true);
+    setError('');
+    
+    if (isDevMode) {
+      alert('В режиме разработки подписка не доступна');
+      setLoading(false);
       return;
     }
     
-    try {
-      setLoading(true);
-      setError('');
+    // Create subscription
+    const result = await createSubscription({
+      telegram_id: user.telegram_id,
+      plan_id: selectedPlan
+    });
+    
+    if (result.success && result.payment_url) {
+      // Open the payment URL
+      WebApp.openTelegramLink(result.payment_url);
       
-      if (isDevMode) {
-        WebApp.showPopup({
-          title: "Режим разработки",
-          message: "В режиме разработки подписка недоступна",
-          buttons: [{ type: "ok" }]
-        });
-        setLoading(false);
-        return;
-      }
-      
-      // Создаем подписку
-      const result = await createSubscription({
-        telegram_id: user.telegram_id,
-        plan_id: selectedPlan
-      });
-      
-      if (result.success && result.payment_url) {
-        // Сохраняем токен для последующей проверки
-        localStorage.setItem('paymentToken', result.payment_token);
-        
-        // Показываем инструкции вместо прямого открытия
-        setPaymentUrl(result.payment_url);
-        setShowPaymentInstructions(true);
-      } else {
-        setError(result.error || 'Не удалось создать подписку');
-      }
-    } catch (err) {
-      setError('Произошла ошибка при создании подписки');
-      console.error(err);
-    } finally {
-      setLoading(false);
+      // Set a timer to check subscription status after return
+      setTimeout(() => {
+        checkPaymentStatus();
+      }, 2000);
+    } else {
+      setError(result.error || 'Не удалось создать подписку');
     }
-  };
+  } catch (err) {
+    setError('Произошла ошибка при создании подписки');
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
   
   // Компонент с инструкциями по оплате
   const PaymentInstructions = () => {
