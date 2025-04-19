@@ -95,16 +95,3 @@ const refreshUserData = async () => {
     console.error('Error refreshing user data:', error);
   }
 };
-
-// И добавьте ее в возвращаемый объект контекста
-return (
-  <AppContext.Provider value={{ 
-    user, 
-    setUser, 
-    isLoading,
-    isDevMode,
-    refreshUserData // Добавьте эту функцию
-  }}>
-    {children}
-  </AppContext.Provider>
-);
