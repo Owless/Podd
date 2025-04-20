@@ -22,7 +22,7 @@ const Layout = ({ children }) => {
             <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             <path d="M8 14l4-4 4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <h1 className="text-lg font-bold">WB Трекер цен</h1>
+          <h1 className="text-lg font-bold">PriceBerry трекер цен</h1>
         </div>
       </header>
       
@@ -32,7 +32,7 @@ const Layout = ({ children }) => {
       
       <footer className="bg-white py-3 text-center text-xs text-gray-500 border-t border-gray-200">
         <div className="container mx-auto px-4 max-w-3xl">
-          © {new Date().getFullYear()} WB Трекер цен | Отслеживание товаров Wildberries
+          © {new Date().getFullYear()} PriceBerry трекер цен | Отслеживание товаров на Wildberries
         </div>
       </footer>
     </div>
