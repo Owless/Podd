@@ -48,7 +48,7 @@ const AddItemForm = ({ onItemAdded }) => {
     return (
       <button 
         onClick={() => setIsExpanded(true)} 
-        className="btn-primary w-full mb-6 py-4"
+        className="w-full mb-6 py-4 bg-purple-800 hover:bg-purple-900 text-white font-medium rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all duration-300"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -59,9 +59,9 @@ const AddItemForm = ({ onItemAdded }) => {
   }
 
   return (
-    <div className="card mb-6">
+    <div className="bg-white rounded-xl p-5 shadow-md border border-gray-100 mb-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Добавление товара</h2>
+        <h2 className="text-lg font-semibold text-purple-900">Добавление товара</h2>
         <button 
           onClick={() => setIsExpanded(false)}
           className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors duration-200"
@@ -74,13 +74,13 @@ const AddItemForm = ({ onItemAdded }) => {
       
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label htmlFor="url" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor="url" className="block mb-2 text-sm font-medium text-gray-700">
             URL или артикул Wildberries
           </label>
           <input
             type="text"
             id="url"
-            className="input"
+            className="bg-gray-50 text-gray-800 border border-gray-200 rounded-xl py-3 px-4 w-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
             placeholder="https://www.wildberries.ru/catalog/12345/detail.aspx или 12345"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -89,25 +89,25 @@ const AddItemForm = ({ onItemAdded }) => {
         </div>
         
         <div className="mb-5">
-          <label htmlFor="desiredPrice" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor="desiredPrice" className="block mb-2 text-sm font-medium text-gray-700">
             Желаемая цена (опционально)
           </label>
           <input
             type="number"
             id="desiredPrice"
-            className="input"
+            className="bg-gray-50 text-gray-800 border border-gray-200 rounded-xl py-3 px-4 w-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
             placeholder="Например, 1000"
             value={desiredPrice}
             onChange={(e) => setDesiredPrice(e.target.value)}
             disabled={loading}
           />
-          <p className="text-xs text-telegram-hint mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             Оставьте пустым для автоматической установки (скидка 10%)
           </p>
         </div>
         
         {error && (
-          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 rounded-lg text-sm">
+          <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
             {error}
           </div>
         )}
@@ -115,7 +115,7 @@ const AddItemForm = ({ onItemAdded }) => {
         <div className="flex gap-3">
           <button
             type="button"
-            className="btn-secondary flex-1"
+            className="flex-1 py-3 px-5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-xl transition-all duration-200"
             onClick={() => setIsExpanded(false)}
             disabled={loading}
           >
@@ -124,7 +124,7 @@ const AddItemForm = ({ onItemAdded }) => {
           
           <button
             type="submit"
-            className="btn-primary flex-1"
+            className="flex-1 py-3 px-5 bg-purple-800 hover:bg-purple-900 text-white font-medium rounded-xl transition-all duration-200 flex items-center justify-center"
             disabled={loading}
           >
             {loading ? (
