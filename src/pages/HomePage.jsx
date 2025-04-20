@@ -70,10 +70,10 @@ const HomePage = () => {
   return (
     <Layout>
       <header className="mb-6">
-        <h1 className="text-xl md:text-2xl font-bold text-telegram-text">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-800">
           Отслеживание цен Wildberries
         </h1>
-        <p className="text-sm text-telegram-hint mt-1">
+        <p className="text-sm text-gray-600 mt-1">
           Добавляйте товары и получайте уведомления о снижении цены
         </p>
       </header>
@@ -86,28 +86,28 @@ const HomePage = () => {
         <ErrorMessage message={error} onRetry={handleRetry} />
       ) : loading ? (
         <div className="py-8 flex justify-center">
-          <div className="w-10 h-10 border-2 border-telegram-button border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-10 h-10 border-2 border-purple-800 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : (
         <div className="mt-2">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-telegram-text">
+            <h2 className="text-lg font-semibold text-gray-800">
               Ваши товары
             </h2>
-            <span className="text-sm text-telegram-hint bg-telegram-secondary px-2 py-1 rounded-full">
+            <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
               Всего: {items.length}
             </span>
           </div>
           
           {items.length === 0 ? (
-            <div className="text-center py-10 bg-gray-50 dark:bg-gray-800 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
-              <svg className="w-14 h-14 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <div className="text-center py-10 bg-white rounded-xl border border-dashed border-gray-200 shadow-sm">
+              <svg className="w-14 h-14 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
               </svg>
-              <p className="text-telegram-hint font-medium">
+              <p className="text-gray-600 font-medium">
                 У вас пока нет товаров для отслеживания
               </p>
-              <p className="text-telegram-hint text-sm mt-1">
+              <p className="text-gray-500 text-sm mt-1">
                 Добавьте товар с помощью кнопки выше
               </p>
             </div>
