@@ -81,46 +81,46 @@ const SubscriptionBanner = () => {
     setSelectedPlan(planId);
   };
 
- const handleSubscribe = async () => {
-  if (!selectedPlan) {
-    setError('Выберите план подписки');
-    return;
-  }
-  
-  try {
-    setLoading(true);
-    setError('');
-    
-    if (isDevMode) {
-      alert('В режиме разработки подписка не доступна');
-      setLoading(false);
+  const handleSubscribe = async () => {
+    if (!selectedPlan) {
+      setError('Выберите план подписки');
       return;
     }
     
-    // Create subscription
-    const result = await createSubscription({
-      telegram_id: user.telegram_id,
-      plan_id: selectedPlan
-    });
-    
-    if (result.success && result.payment_url) {
-      // Open the payment URL
-      WebApp.openTelegramLink(result.payment_url);
+    try {
+      setLoading(true);
+      setError('');
       
-      // Set a timer to check subscription status after return
-      setTimeout(() => {
-        checkPaymentStatus();
-      }, 2000);
-    } else {
-      setError(result.error || 'Не удалось создать подписку');
+      if (isDevMode) {
+        alert('В режиме разработки подписка не доступна');
+        setLoading(false);
+        return;
+      }
+      
+      // Create subscription
+      const result = await createSubscription({
+        telegram_id: user.telegram_id,
+        plan_id: selectedPlan
+      });
+      
+      if (result.success && result.payment_url) {
+        // Open the payment URL
+        WebApp.openTelegramLink(result.payment_url);
+        
+        // Set a timer to check subscription status after return
+        setTimeout(() => {
+          checkPaymentStatus();
+        }, 2000);
+      } else {
+        setError(result.error || 'Не удалось создать подписку');
+      }
+    } catch (err) {
+      setError('Произошла ошибка при создании подписки');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    setError('Произошла ошибка при создании подписки');
-    console.error(err);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
   
   // Компонент с инструкциями по оплате
   const PaymentInstructions = () => {
@@ -150,7 +150,7 @@ const SubscriptionBanner = () => {
     };
     
     return (
-      <div className="mt-4 p-4 border border-blue-300 rounded-lg bg-blue-50 dark:bg-blue-900/30">
+      <div className="mt-4 p-4 border border-blue-300 rounded-lg bg-blue-50">
         <h4 className="font-medium mb-2">Инструкция по оплате:</h4>
         <ol className="list-decimal list-inside space-y-2 text-sm">
           <li>Скопируйте ссылку на оплату</li>
@@ -163,21 +163,21 @@ const SubscriptionBanner = () => {
         <div className="mt-4 flex flex-col gap-2">
           <button 
             onClick={copyToClipboard}
-            className="btn-primary text-sm"
+            className="py-3 px-5 bg-purple-800 hover:bg-purple-900 text-white font-medium rounded-xl text-sm"
           >
             Скопировать ссылку на оплату
           </button>
           
           <button 
             onClick={directOpen}
-            className="btn-secondary text-sm"
+            className="py-3 px-5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-xl text-sm"
           >
             Открыть напрямую (может не работать)
           </button>
           
           <button 
             onClick={() => setShowPaymentInstructions(false)}
-            className="btn-text text-sm"
+            className="text-purple-700 text-sm font-medium"
           >
             Вернуться к выбору плана
           </button>
@@ -199,18 +199,18 @@ const SubscriptionBanner = () => {
     const isExpiringSoon = daysLeft <= 3;
     
     return (
-      <div className={`card mb-6 flex flex-col md:flex-row md:items-center gap-4 ${isExpiringSoon ? 'border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700' : 'border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-700'}`}>
+      <div className={`bg-white rounded-xl p-5 shadow-md border mb-6 flex flex-col md:flex-row md:items-center gap-4 ${isExpiringSoon ? 'border-amber-300 bg-amber-50' : 'border-green-200 bg-green-50'}`}>
         <div className="flex-1">
           <div className="flex items-center">
-            <svg className="w-5 h-5 text-green-600 dark:text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <h3 className="font-semibold text-green-800 dark:text-green-300">
+            <h3 className="font-semibold text-green-800">
               {isExpiringSoon ? 'Подписка скоро заканчивается' : 'Подписка активна'}
             </h3>
           </div>
           
-          <p className="text-sm text-green-700 dark:text-green-400 mt-1">
+          <p className="text-sm text-green-700 mt-1">
             {isExpiringSoon 
               ? `Ваша подписка действует до ${formattedDate}. Осталось ${daysLeft} дн.` 
               : `Ваша подписка действует до ${formattedDate}`
@@ -226,7 +226,7 @@ const SubscriptionBanner = () => {
           <button
             onClick={handleOpenPlans}
             disabled={loading}
-            className="btn-primary text-sm py-2"
+            className="py-3 px-5 bg-purple-800 hover:bg-purple-900 text-white font-medium rounded-xl text-sm"
           >
             {loading ? 'Загрузка...' : 'Продлить'}
           </button>
@@ -238,9 +238,9 @@ const SubscriptionBanner = () => {
   // Если показываем планы
   if (showPlans) {
     return (
-      <div className="card mb-6 border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700">
+      <div className="bg-white rounded-xl p-5 shadow-md border border-blue-200 bg-blue-50 mb-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-semibold text-blue-800 dark:text-blue-300">Выберите план подписки</h3>
+          <h3 className="font-semibold text-blue-800">Выберите план подписки</h3>
           <button 
             onClick={handleClosePlans}
             className="text-gray-500 hover:text-gray-700"
@@ -263,8 +263,8 @@ const SubscriptionBanner = () => {
                     key={plan.id}
                     className={`border rounded-lg p-3 cursor-pointer transition-all ${
                       selectedPlan === plan.id 
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' 
-                        : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                        ? 'border-purple-500 bg-purple-50' 
+                        : 'border-gray-200 hover:border-purple-300'
                     }`}
                     onClick={() => handleSelectPlan(plan.id)}
                   >
@@ -278,7 +278,7 @@ const SubscriptionBanner = () => {
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{plan.description}</p>
+                        <p className="text-sm text-gray-600">{plan.description}</p>
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-bold">{plan.price} ⭐</div>
@@ -290,7 +290,7 @@ const SubscriptionBanner = () => {
             )}
             
             {error && (
-              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 rounded-lg text-sm">
+              <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
                 {error}
               </div>
             )}
@@ -298,7 +298,7 @@ const SubscriptionBanner = () => {
             <div className="flex gap-3">
               <button
                 onClick={handleClosePlans}
-                className="btn-secondary flex-1"
+                className="flex-1 py-3 px-5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-xl"
                 disabled={loading}
               >
                 Назад
@@ -306,12 +306,12 @@ const SubscriptionBanner = () => {
               
               <button
                 onClick={handleSubscribe}
-                className="btn-primary flex-1"
+                className="flex-1 py-3 px-5 bg-purple-800 hover:bg-purple-900 text-white font-medium rounded-xl"
                 disabled={loading || !selectedPlan}
               >
                 {loading ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -328,24 +328,24 @@ const SubscriptionBanner = () => {
   
   // Базовый вид баннера (без подписки и не в режиме выбора плана)
   return (
-    <div className="card mb-6 border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700">
+    <div className="bg-white rounded-xl p-5 shadow-md border border-purple-200 bg-purple-50 mb-6">
       <div className="flex flex-col md:flex-row md:items-center gap-4">
         <div className="flex-1">
           <div className="flex items-center">
-            <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-5 h-5 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <h3 className="font-semibold text-blue-800 dark:text-blue-300">Бесплатный режим</h3>
+            <h3 className="font-semibold text-purple-800">Бесплатный режим</h3>
           </div>
           
-          <p className="text-sm text-blue-700 dark:text-blue-400 mt-1 mb-3 md:mb-0">
+          <p className="text-sm text-purple-700 mt-1 mb-3 md:mb-0">
             Вы можете отслеживать только один товар. Оформите подписку для отслеживания большего количества товаров.
           </p>
         </div>
         
         <button
           onClick={handleOpenPlans}
-          className="btn-primary text-sm py-2 whitespace-nowrap"
+          className="py-3 px-5 bg-purple-800 hover:bg-purple-900 text-white font-medium rounded-xl text-sm whitespace-nowrap flex items-center justify-center gap-2"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 11V9a2 2 0 00-2-2m2 4v4a2 2 0 104 0v-1m-4-3H9m2 0h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
