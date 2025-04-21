@@ -20,7 +20,7 @@ const Layout = ({ children }) => {
         <div className="container mx-auto px-4 max-w-3xl flex items-center">
           {/* Используем логотип из папки public */}
           <img 
-            src="/logo.svg" // Путь к файлу в папке public
+            src="/logo.png" // Путь к файлу в папке public
             alt="PriceBerry Logo" 
             className="w-8 h-8 mr-2" // Сохраняем стили для размера и отступа
           />
