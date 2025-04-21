@@ -22,7 +22,7 @@ const Layout = ({ children }) => {
           <img 
             src="/logo.png" // Путь к файлу в папке public
             alt="PriceBerry Logo" 
-            className="w-8 h-8 mr-2" // Сохраняем стили для размера и отступа
+            className="w-10 h-10 mr-2" // Сохраняем стили для размера и отступа
           />
           <h1 className="text-lg font-bold">PriceBerry трекер цен</h1>
         </div>
