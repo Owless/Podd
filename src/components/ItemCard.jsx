@@ -221,7 +221,6 @@ const ItemCard = ({ item, onDelete }) => {
         </svg>
       </div>
 
-      {/* --- Контент карточки (сдвигаемый) --- */}
       <div
         ref={cardContentRef}
         className={`relative z-10 bg-white rounded-xl border ${isPriceReached ? 'border-green-300' : 'border-gray-100'} ${isPriceReached && !isExpanded ? 'bg-green-50' : 'bg-white'}`}
@@ -230,7 +229,6 @@ const ItemCard = ({ item, onDelete }) => {
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
       >
-         {/* Внутреннее содержимое карточки */}
           <div className="p-4">
              {isPriceReached && (
                <div className="absolute top-3 right-3 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-full z-20">
@@ -253,7 +251,6 @@ const ItemCard = ({ item, onDelete }) => {
                  />
                </div>
 
-               {/* Информация о товаре */}
                <div className="flex-1 min-w-0">
                  <h3 className="text-sm md:text-base font-medium mb-2 text-gray-800 line-clamp-2">
                    {item.title}
@@ -272,14 +269,12 @@ const ItemCard = ({ item, onDelete }) => {
                </div>
              </div>
 
-             {/* Развернутая информация (если isExpanded) */}
              {isExpanded && (
                <div className="mt-4 pt-4 border-t border-gray-100">
                   <div className="flex justify-between items-center mb-3">
                       <span className="text-xs text-gray-500">
                         Последняя проверка: {formattedDate}
                       </span>
-                       {/* Старая кнопка удаления здесь больше не нужна */}
                   </div>
                   <a
                     href={item.url}
@@ -295,9 +290,9 @@ const ItemCard = ({ item, onDelete }) => {
                   </a>
                 </div>
              )}
-           </div> {/* Конец .p-4 */}
-      </div> {/* Конец .cardContentRef */}
-    </div> {/* Конец внешнего контейнера */}
+           </div> 
+      </div> 
+    </div> 
   );
 };
 
