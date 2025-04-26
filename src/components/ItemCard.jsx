@@ -2,64 +2,33 @@ import React, { useState, useRef, useEffect } from 'react';
 
 const ItemCard = ({ item, onDelete }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [translateX, setTranslateX] = useState(0);
+  const [position, setPosition] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const startX = useRef(0);
-  const currentX = useRef(0);
+  const startPos = useRef(0);
   const cardRef = useRef(null);
   const deleteBtnRef = useRef(null);
 
-  // Константы для свайпа
-  const DELETE_BTN_WIDTH = 80;
-  const REVEAL_THRESHOLD = -DELETE_BTN_WIDTH / 2;
-  const DELETE_THRESHOLD = -DELETE_BTN_WIDTH;
+  const DELETE_BTN_WIDTH = 60;
+  const SWIPE_THRESHOLD = DELETE_BTN_WIDTH * 0.6;
+  const MAX_SWIPE = DELETE_BTN_WIDTH * 1.2;
 
-  // Форматирование данных
-  const priceFormatted = new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: 'RUB',
-    minimumFractionDigits: 0,
-  }).format(item.current_price);
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('ru-RU', {
+      style: 'currency',
+      currency: 'RUB',
+      minimumFractionDigits: 0
+    }).format(price);
+  };
 
-  const desiredPriceFormatted = new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: 'RUB',
-    minimumFractionDigits: 0,
-  }).format(item.desired_price);
-
-  const discount = item.current_price > 0
-    ? 100 - Math.round((item.desired_price / item.current_price) * 100)
+  const currentPrice = formatPrice(item.current_price);
+  const desiredPrice = formatPrice(item.desired_price);
+  const discount = item.current_price > 0 
+    ? Math.round(100 - (item.desired_price / item.current_price * 100))
     : 0;
-
   const isPriceReached = item.current_price <= item.desired_price;
 
-  const lastCheckedDate = new Date(item.last_checked);
-  const formattedDate = lastCheckedDate.toLocaleDateString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-
-  const confirmDelete = () => {
-    if (window.confirm('Удалить товар из отслеживания?')) {
-      onDelete(item.id);
-    } else {
-      resetCardPosition();
-    }
-  };
-
-  const handleTouchStart = (e) => {
-    startX.current = e.touches[0].clientX;
-    currentX.current = translateX;
-    setIsDragging(true);
-    cardRef.current.style.transition = 'none';
-  };
-
-  const handleMouseDown = (e) => {
-    if (e.button !== 0) return;
-    startX.current = e.clientX;
-    currentX.current = translateX;
+  const handleStart = (clientX) => {
+    startPos.current = clientX;
     setIsDragging(true);
     cardRef.current.style.transition = 'none';
   };
@@ -67,60 +36,53 @@ const ItemCard = ({ item, onDelete }) => {
   const handleMove = (clientX) => {
     if (!isDragging) return;
     
-    const diff = clientX - startX.current;
-    let newX = currentX.current + diff;
+    const diff = clientX - startPos.current;
+    let newPosition = diff;
     
-    // Ограничиваем движение вправо и задаем "жесткость" при движении влево
-    newX = Math.min(0, Math.max(-DELETE_BTN_WIDTH * 1.5, newX));
-    
-    setTranslateX(newX);
-    
-    // Изменяем цвет кнопки при приближении к порогу удаления
-    if (deleteBtnRef.current) {
-      const progress = Math.min(1, Math.abs(newX) / DELETE_BTN_WIDTH);
-      deleteBtnRef.current.style.backgroundColor = `rgb(239, 68, 68, ${0.5 + progress * 0.5})`;
+    if (position < 0) {
+      newPosition = position + diff;
     }
-  };
-
-  const handleTouchMove = (e) => {
-    e.preventDefault();
-    handleMove(e.touches[0].clientX);
-  };
-
-  const handleMouseMove = (e) => {
-    handleMove(e.clientX);
+    
+    newPosition = Math.min(0, Math.max(-MAX_SWIPE, newPosition));
+    setPosition(newPosition);
+    
+    const progress = Math.min(1, Math.abs(newPosition) / DELETE_BTN_WIDTH);
+    deleteBtnRef.current.style.opacity = `${0.5 + progress * 0.5}`;
   };
 
   const handleEnd = () => {
     if (!isDragging) return;
     setIsDragging(false);
-    cardRef.current.style.transition = 'transform 0.3s ease-out';
+    cardRef.current.style.transition = 'transform 0.2s ease-out';
     
-    // Определяем конечное положение
-    if (translateX <= DELETE_THRESHOLD) {
-      confirmDelete();
-    } else if (translateX < REVEAL_THRESHOLD) {
-      setTranslateX(-DELETE_BTN_WIDTH);
+    if (position <= -DELETE_BTN_WIDTH) {
+      if (window.confirm('Удалить товар из отслеживания?')) {
+        onDelete(item.id);
+      } else {
+        resetPosition();
+      }
+    } else if (position <= -SWIPE_THRESHOLD) {
+      setPosition(-DELETE_BTN_WIDTH);
     } else {
-      resetCardPosition();
+      resetPosition();
     }
   };
 
-  const resetCardPosition = () => {
-    setTranslateX(0);
-    if (deleteBtnRef.current) {
-      deleteBtnRef.current.style.backgroundColor = '#ef4444';
-    }
+  const resetPosition = () => {
+    setPosition(0);
+    deleteBtnRef.current.style.opacity = '1';
   };
 
   const handleDeleteClick = (e) => {
     e.stopPropagation();
-    confirmDelete();
+    if (window.confirm('Удалить товар из отслеживания?')) {
+      onDelete(item.id);
+    }
   };
 
   const handleCardClick = (e) => {
-    if (Math.abs(translateX) > 10) {
-      resetCardPosition();
+    if (Math.abs(position) > 10) {
+      resetPosition();
       return;
     }
     
@@ -130,106 +92,103 @@ const ItemCard = ({ item, onDelete }) => {
   };
 
   useEffect(() => {
+    const handleMouseMove = (e) => handleMove(e.clientX);
+    const handleTouchMove = (e) => {
+      e.preventDefault();
+      handleMove(e.touches[0].clientX);
+    };
+    const handleEndEvent = () => handleEnd();
+
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleEnd);
+      document.addEventListener('mouseup', handleEndEvent);
       document.addEventListener('touchmove', handleTouchMove, { passive: false });
-      document.addEventListener('touchend', handleEnd);
-    } else {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleEnd);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleEnd);
+      document.addEventListener('touchend', handleEndEvent);
     }
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('mouseup', handleEndEvent);
       document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleEnd);
+      document.removeEventListener('touchend', handleEndEvent);
     };
-  }, [isDragging]);
+  }, [isDragging, position]);
 
   return (
-    <div className="relative mb-4 overflow-hidden rounded-xl shadow-md bg-white">
+    <div className="relative mb-3 overflow-hidden rounded-lg bg-white shadow-sm">
       <div
         ref={deleteBtnRef}
-        className="absolute top-0 right-0 h-full bg-red-500 flex items-center justify-center text-white cursor-pointer"
-        style={{ width: `${DELETE_BTN_WIDTH}px` }}
+        className="absolute top-0 right-0 h-full w-15 bg-red-500 flex items-center justify-center text-white"
         onClick={handleDeleteClick}
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </svg>
       </div>
 
       <div
         ref={cardRef}
-        className={`relative z-10 bg-white rounded-xl border ${isPriceReached ? 'border-green-300' : 'border-gray-100'} ${
-          isPriceReached && !isExpanded ? 'bg-green-50' : 'bg-white'
+        className={`relative z-10 bg-white rounded-lg border ${
+          isPriceReached ? 'border-green-300 bg-green-50' : 'border-gray-200'
         }`}
-        style={{ transform: `translateX(${translateX}px)` }}
+        style={{ transform: `translateX(${position}px)` }}
         onClick={handleCardClick}
-        onMouseDown={handleMouseDown}
-        onTouchStart={handleTouchStart}
+        onMouseDown={(e) => handleStart(e.clientX)}
+        onTouchStart={(e) => handleStart(e.touches[0].clientX)}
       >
-        <div className="p-4">
+        <div className="p-3">
           {isPriceReached && (
-            <div className="absolute top-3 right-3 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-full z-20">
+            <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full">
               Цена снижена!
             </div>
           )}
 
-          <div className="flex gap-4">
-            <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 overflow-hidden rounded-xl shadow-sm border border-gray-100 bg-white">
+          <div className="flex gap-3">
+            <div className="w-16 h-16 flex-shrink-0 rounded-lg border border-gray-200 overflow-hidden bg-white">
               <img
                 src={item.image}
                 alt={item.title}
                 className="w-full h-full object-contain"
-                draggable="false"
                 onError={(e) => {
                   e.target.onerror = null;
-                  e.target.src = 'https://via.placeholder.com/120?text=WB';
+                  e.target.src = 'https://via.placeholder.com/80?text=WB';
                 }}
               />
             </div>
 
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm md:text-base font-medium mb-2 text-gray-800 line-clamp-2">
+              <h3 className="text-sm font-medium mb-1.5 text-gray-800 line-clamp-2">
                 {item.title}
               </h3>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className={`px-2 py-1 rounded-xl font-medium ${isPriceReached ? 'bg-green-200 text-green-800' : 'bg-purple-100 text-purple-800'}`}>
-                  {priceFormatted}
+              <div className="flex flex-wrap gap-1.5 text-xs">
+                <span className={`px-1.5 py-0.5 rounded-lg font-medium ${
+                  isPriceReached ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'
+                }`}>
+                  {currentPrice}
                 </span>
-                <span className="bg-purple-50 text-purple-800 px-2 py-1 rounded-xl font-medium border border-purple-200">
-                  Ожидаемая: {desiredPriceFormatted}
+                <span className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded-lg font-medium">
+                  Ждем: {desiredPrice}
                 </span>
-                <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded-xl font-medium">
-                  Скидка: {discount}%
+                <span className="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-lg font-medium">
+                  -{discount}%
                 </span>
               </div>
             </div>
           </div>
 
           {isExpanded && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-xs text-gray-500">
-                  Последняя проверка: {formattedDate}
-                </span>
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <div className="text-xs text-gray-500 mb-2">
+                Проверено: {new Date(item.last_checked).toLocaleString('ru-RU')}
               </div>
               <a
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full text-sm mt-2 py-3 px-5 bg-purple-800 hover:bg-purple-900 text-white font-medium rounded-xl flex items-center justify-center gap-2"
+                className="block text-sm py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg text-center"
                 onClick={(e) => e.stopPropagation()}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-                Открыть на Wildberries
+                Открыть товар
               </a>
             </div>
           )}
