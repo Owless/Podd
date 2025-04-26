@@ -1,20 +1,26 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AppProvider } from './contexts/AppContextProvider';
+import { useEffect } from 'react';
+import './App.css';
 import HomePage from './pages/HomePage';
 import ReferralsPage from './pages/ReferralsPage';
 import ProfilePage from './pages/ProfilePage';
 import BottomNavigation from './components/BottomNavigation';
+import { AppContextProvider } from './contexts/AppContextProvider';
 
-function App() {
+
   return (
-    <AppProvider>
+    <AppContextProvider>
       <Router>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-        </Routes>
+        <div className="app min-h-screen bg-gray-100">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/referrals" element={<ReferralsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+          </Routes>
+          <BottomNavigation />
+        </div>
       </Router>
-    </AppProvider>
+    </AppContextProvider>
   );
 }
 
