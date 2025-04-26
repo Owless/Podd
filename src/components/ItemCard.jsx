@@ -3,18 +3,18 @@ import React, { useState, useRef, useEffect } from 'react';
 const ItemCard = ({ item, onDelete }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [translateX, setTranslateX] = useState(0);
-  const [isSwiping, setIsSwiping] = useState(false);
-  const [isRevealed, setIsRevealed] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const startX = useRef(0);
-  const currentTranslateX = useRef(0);
-  const cardContentRef = useRef(null);
+  const currentX = useRef(0);
+  const cardRef = useRef(null);
+  const deleteBtnRef = useRef(null);
 
   // Константы для свайпа
-  const revealWidth = 80; // Ширина кнопки "Удалить"
-  const revealThreshold = -40; // Порог для фиксации кнопки (-40px)
-  const deleteThreshold = -120; // Порог для удаления (-120px)
+  const DELETE_BTN_WIDTH = 80;
+  const REVEAL_THRESHOLD = -DELETE_BTN_WIDTH / 2;
+  const DELETE_THRESHOLD = -DELETE_BTN_WIDTH;
 
-  // Форматирование цены и даты
+  // Форматирование данных
   const priceFormatted = new Intl.NumberFormat('ru-RU', {
     style: 'currency',
     currency: 'RUB',
@@ -41,181 +41,130 @@ const ItemCard = ({ item, onDelete }) => {
     minute: '2-digit'
   });
 
-  // Функция подтверждения удаления
-  const confirmAndDelete = () => {
-    if (window.confirm('Вы действительно хотите удалить этот товар из отслеживания?')) {
+  const confirmDelete = () => {
+    if (window.confirm('Удалить товар из отслеживания?')) {
       onDelete(item.id);
     } else {
-      resetSwipe();
+      resetCardPosition();
     }
   };
 
-  // Объединенная логика свайпа
-  const handleSwipeStart = (clientX) => {
-    startX.current = clientX;
-    setIsSwiping(true);
-    setIsRevealed(false);
-    if (cardContentRef.current) {
-      cardContentRef.current.style.transition = 'none';
-    }
+  const handleTouchStart = (e) => {
+    startX.current = e.touches[0].clientX;
+    currentX.current = translateX;
+    setIsDragging(true);
+    cardRef.current.style.transition = 'none';
   };
 
-  const handleSwipeMove = (clientX) => {
-    if (!isSwiping) return;
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return;
+    startX.current = e.clientX;
+    currentX.current = translateX;
+    setIsDragging(true);
+    cardRef.current.style.transition = 'none';
+  };
+
+  const handleMove = (clientX) => {
+    if (!isDragging) return;
     
     const diff = clientX - startX.current;
-    let newTranslateX = currentTranslateX.current + diff;
+    let newX = currentX.current + diff;
     
-    // Ограничиваем смещение
-    newTranslateX = Math.max(deleteThreshold, Math.min(0, newTranslateX));
+    // Ограничиваем движение вправо и задаем "жесткость" при движении влево
+    newX = Math.min(0, Math.max(-DELETE_BTN_WIDTH * 1.5, newX));
     
-    setTranslateX(newTranslateX);
+    setTranslateX(newX);
     
-    // Визуальная обратная связь
-    if (cardContentRef.current) {
-      const deleteButton = cardContentRef.current.previousElementSibling;
-      if (deleteButton) {
-        if (newTranslateX <= deleteThreshold) {
-          deleteButton.classList.add('bg-red-700');
-          deleteButton.classList.remove('bg-red-500');
-        } else {
-          deleteButton.classList.add('bg-red-500');
-          deleteButton.classList.remove('bg-red-700');
-        }
-      }
+    // Изменяем цвет кнопки при приближении к порогу удаления
+    if (deleteBtnRef.current) {
+      const progress = Math.min(1, Math.abs(newX) / DELETE_BTN_WIDTH);
+      deleteBtnRef.current.style.backgroundColor = `rgb(239, 68, 68, ${0.5 + progress * 0.5})`;
     }
-  };
-
-  const handleSwipeEnd = () => {
-    if (!isSwiping) return;
-    setIsSwiping(false);
-    
-    // Восстанавливаем анимацию
-    if (cardContentRef.current) {
-      cardContentRef.current.style.transition = 'transform 0.3s ease-out';
-    }
-    
-    // Определяем конечное состояние
-    if (translateX <= deleteThreshold) {
-      confirmAndDelete();
-    } else if (translateX < revealThreshold) {
-      setTranslateX(-revealWidth);
-      currentTranslateX.current = -revealWidth;
-      setIsRevealed(true);
-    } else {
-      resetSwipe();
-    }
-  };
-
-  // Обработчики событий мыши и касаний
-  const handleTouchStart = (e) => {
-    handleSwipeStart(e.touches[0].clientX);
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd);
   };
 
   const handleTouchMove = (e) => {
     e.preventDefault();
-    handleSwipeMove(e.touches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    document.removeEventListener('touchmove', handleTouchMove);
-    document.removeEventListener('touchend', handleTouchEnd);
-    handleSwipeEnd();
-  };
-
-  const handleMouseDown = (e) => {
-    if (e.button === 0) {
-      handleSwipeStart(e.clientX);
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
+    handleMove(e.touches[0].clientX);
   };
 
   const handleMouseMove = (e) => {
-    handleSwipeMove(e.clientX);
+    handleMove(e.clientX);
   };
 
-  const handleMouseUp = () => {
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-    handleSwipeEnd();
-  };
-
-  // Сброс состояния свайпа
-  const resetSwipe = (animated = true) => {
-    if (cardContentRef.current) {
-      cardContentRef.current.style.transition = animated ? 'transform 0.3s ease-out' : 'none';
+  const handleEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    cardRef.current.style.transition = 'transform 0.3s ease-out';
+    
+    // Определяем конечное положение
+    if (translateX <= DELETE_THRESHOLD) {
+      confirmDelete();
+    } else if (translateX < REVEAL_THRESHOLD) {
+      setTranslateX(-DELETE_BTN_WIDTH);
+    } else {
+      resetCardPosition();
     }
-    setTranslateX(0);
-    currentTranslateX.current = 0;
-    setIsRevealed(false);
   };
 
-  // Обработчик клика по кнопке удаления
+  const resetCardPosition = () => {
+    setTranslateX(0);
+    if (deleteBtnRef.current) {
+      deleteBtnRef.current.style.backgroundColor = '#ef4444';
+    }
+  };
+
   const handleDeleteClick = (e) => {
     e.stopPropagation();
-    confirmAndDelete();
+    confirmDelete();
   };
 
-  // Обработчик клика по карточке
   const handleCardClick = (e) => {
-    if (isSwiping || currentTranslateX.current !== 0) {
-      if (!e.target.closest('.delete-button-container')) {
-        resetSwipe();
-      }
+    if (Math.abs(translateX) > 10) {
+      resetCardPosition();
       return;
     }
     
-    if (e.target.closest('a')) {
-      return;
-    }
+    if (e.target.closest('a')) return;
     
     setIsExpanded(!isExpanded);
   };
 
-  // Закрытие карточки при клике вне
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      const cardNode = cardContentRef.current;
-      const deleteButtonNode = cardNode?.previousElementSibling;
-      
-      if (isRevealed && cardNode && !cardNode.contains(e.target) && 
-          deleteButtonNode && !deleteButtonNode.contains(e.target)) {
-        resetSwipe();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleEnd);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleEnd);
+    } else {
       document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mouseup', handleEnd);
       document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('touchend', handleEnd);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleEnd);
     };
-  }, [isRevealed]);
+  }, [isDragging]);
 
   return (
     <div className="relative mb-4 overflow-hidden rounded-xl shadow-md bg-white">
       <div
-        className={`delete-button-container absolute top-0 right-0 h-full flex items-center justify-center text-white cursor-pointer transition-colors duration-200 ${
-          isRevealed ? 'bg-red-600' : 'bg-red-500'
-        }`}
+        ref={deleteBtnRef}
+        className="absolute top-0 right-0 h-full bg-red-500 flex items-center justify-center text-white cursor-pointer"
+        style={{ width: `${DELETE_BTN_WIDTH}px` }}
         onClick={handleDeleteClick}
-        style={{ width: `${revealWidth}px` }}
       >
-        <svg className="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </svg>
       </div>
 
       <div
-        ref={cardContentRef}
+        ref={cardRef}
         className={`relative z-10 bg-white rounded-xl border ${isPriceReached ? 'border-green-300' : 'border-gray-100'} ${
           isPriceReached && !isExpanded ? 'bg-green-50' : 'bg-white'
         }`}
