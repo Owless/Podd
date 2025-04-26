@@ -6,6 +6,7 @@ import ReferralsPage from './pages/ReferralsPage';
 import ProfilePage from './pages/ProfilePage';
 import BottomNavigation from './components/BottomNavigation';
 import { AppProvider } from './contexts/AppContextProvider'; // с фигурными скобками!
+import ErrorModal from './components/ErrorModal';
 
 function App() {
   return (
