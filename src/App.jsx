@@ -22,6 +22,6 @@ import { AppContextProvider } from './contexts/AppContextProvider';
       </Router>
     </AppContextProvider>
   );
-}
+
 
 export default App;
