@@ -210,7 +210,6 @@ const ItemCard = ({ item, onDelete }) => {
   return (
     <div className="relative mb-4 overflow-hidden rounded-xl shadow-md bg-white">
 
-      {/* --- Кнопка "Удалить" (сзади) --- */}
       <div
         className="delete-button-container transition-colors duration-100 ease-in-out absolute top-0 right-0 h-full bg-red-500 flex items-center justify-center text-white cursor-pointer"
         onClick={handleDeleteClick}
