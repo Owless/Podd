@@ -6,6 +6,7 @@ import ReferralsPage from './pages/ReferralsPage';
 import BottomNavigation from './components/BottomNavigation';
 import LoadingOverlay from './components/LoadingOverlay';
 import ErrorModal from './components/ErrorModal';
+import ReferralStats from './components/ReferralStats';
 
 const App = () => {
   const { loading, error } = useApp();
