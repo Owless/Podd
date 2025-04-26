@@ -5,7 +5,7 @@ import HomePage from './pages/HomePage';
 import ReferralsPage from './pages/ReferralsPage';
 import ProfilePage from './pages/ProfilePage';
 import BottomNavigation from './components/BottomNavigation';
-import { AppContext } from './contexts/AppContextProvider';
+import AppContextProvider  from './contexts/AppContextProvider';
 
 function App() {
   return (
