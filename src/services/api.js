@@ -78,7 +78,8 @@ export const getProductInfo = async (articleId) => {
     };
   }
 };
-// Get subscription plans
+
+// Получение информации о пользователе
 export const getUserInfo = async (telegramId) => {
   try {
     const response = await api.get(`/api/users/info?telegram_id=${telegramId}`);
@@ -127,6 +128,34 @@ export const checkSubscription = async (data) => {
     return response.data;
   } catch (error) {
     console.error('Error checking subscription:', error);
+    return {
+      success: false,
+      error: error.response?.data?.error || error.message,
+    };
+  }
+};
+
+// Получение информации о реферальной программе пользователя
+export const getReferralInfo = async (telegramId) => {
+  try {
+    const response = await api.get(`/api/user/referrals?telegram_id=${telegramId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching referral info:', error);
+    return {
+      success: false,
+      error: error.response?.data?.error || error.message,
+    };
+  }
+};
+
+// Обработка подписки (включая начисление реферальных бонусов)
+export const processSubscription = async (data) => {
+  try {
+    const response = await api.post('/api/subscription/process', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error processing subscription:', error);
     return {
       success: false,
       error: error.response?.data?.error || error.message,
