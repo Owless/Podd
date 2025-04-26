@@ -4,7 +4,6 @@ import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
 import ReferralsPage from './pages/ReferralsPage';
 import BottomNavigation from './components/BottomNavigation';
-import LoadingOverlay from './components/LoadingOverlay';
 import ErrorModal from './components/ErrorModal';
 import ReferralStats from './components/ReferralStats';
 
