@@ -5,11 +5,11 @@ import HomePage from './pages/HomePage';
 import ReferralsPage from './pages/ReferralsPage';
 import ProfilePage from './pages/ProfilePage';
 import BottomNavigation from './components/BottomNavigation';
-import { AppProvider } from './contexts/AppContextProvider'; // с фигурными скобками!
+import { AppContext } from './contexts/AppContextProvider';
 
 function App() {
   return (
-    <AppProvider> {/* используешь AppProvider */}
+    <AppContextProvider>
       <Router>
         <div className="app min-h-screen bg-gray-100">
           <Routes>
@@ -20,7 +20,7 @@ function App() {
           <BottomNavigation />
         </div>
       </Router>
-    </AppProvider>
+    </AppContextProvider>
   );
 }
 
