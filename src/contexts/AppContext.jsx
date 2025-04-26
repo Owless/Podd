@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import WebApp from '@twa-dev/sdk';
-import { initUser } from '../services/api';
+import { initUser, getUserInfo } from '../services/api';
 
 export const AppContext = createContext(null);
 
@@ -8,7 +8,25 @@ export const useAppState = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [referralCode, setReferralCode] = useState(null);
   const isDevMode = import.meta.env.DEV;
+
+  // Извлечение реферального кода из URL, если он есть
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    
+    if (refCode) {
+      setReferralCode(refCode);
+      
+      // Опционально: удаляем параметр ref из URL для чистоты
+      const newUrl = window.location.pathname + 
+        (urlParams.toString() ? 
+          '?' + urlParams.toString().replace(/ref=[^&]*&?/, '') : 
+          '');
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, []);
 
   // Инициализация пользователя
   useEffect(() => {
@@ -18,12 +36,19 @@ export const useAppState = () => {
         
         // В режиме разработки используем тестовые данные
         if (isDevMode) {
-          const response = await initUser({
+          const payload = {
             dev_mode: true,
             telegram_id: 123456789,
             username: 'test_user',
             first_name: 'Test User'
-          });
+          };
+          
+          // Добавляем реферальный код, если он есть
+          if (referralCode) {
+            payload.referral_code = referralCode;
+          }
+          
+          const response = await initUser(payload);
           
           if (response.success) {
             setUser(response.user);
@@ -37,9 +62,16 @@ export const useAppState = () => {
             return;
           }
           
-          const response = await initUser({
+          const payload = {
             initData: WebApp.initData
-          });
+          };
+          
+          // Добавляем реферальный код, если он есть
+          if (referralCode) {
+            payload.referral_code = referralCode;
+          }
+          
+          const response = await initUser(payload);
           
           if (response.success) {
             setUser(response.user);
@@ -56,14 +88,14 @@ export const useAppState = () => {
     };
     
     init();
-  }, [isDevMode]);
+  }, [isDevMode, referralCode]);
 
   // Сообщаем Telegram, что приложение готово
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !isDevMode) {
       WebApp.ready();
     }
-  }, [loading]);
+  }, [loading, isDevMode]);
 
   // Настройка темы Telegram
   useEffect(() => {
@@ -73,7 +105,28 @@ export const useAppState = () => {
     }
   }, [isDevMode]);
 
-  return { user, loading, error, isDevMode };
+  // Функция обновления данных пользователя
+  const refreshUserData = async () => {
+    if (!user || !user.telegram_id) return;
+    
+    try {
+      const userData = await getUserInfo(user.telegram_id);
+      if (userData.success) {
+        setUser(userData.user);
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+    }
+  };
+
+  return { 
+    user, 
+    setUser,
+    loading, 
+    error, 
+    isDevMode,
+    refreshUserData
+  };
 };
 
 export const useApp = () => {
@@ -82,16 +135,4 @@ export const useApp = () => {
     throw new Error('useApp must be used within an AppProvider');
   }
   return context;
-};
-const refreshUserData = async () => {
-  if (!user || !user.telegram_id) return;
-  
-  try {
-    const userData = await getUserInfo(user.telegram_id);
-    if (userData.success) {
-      setUser(userData.user);
-    }
-  } catch (error) {
-    console.error('Error refreshing user data:', error);
-  }
 };
