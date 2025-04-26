@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://back-8vq3.onrender.com';
+const API_URL = import.meta.env.VITE_API_URL || 'https://wb-tracker-api-production.up.railway.app';
 
 const api = axios.create({
   baseURL: API_URL,
