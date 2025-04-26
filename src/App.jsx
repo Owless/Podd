@@ -7,7 +7,7 @@ import ProfilePage from './pages/ProfilePage';
 import BottomNavigation from './components/BottomNavigation';
 import { AppContextProvider } from './contexts/AppContextProvider';
 
-
+function App() {
   return (
     <AppContextProvider>
       <Router>
@@ -22,6 +22,6 @@ import { AppContextProvider } from './contexts/AppContextProvider';
       </Router>
     </AppContextProvider>
   );
-
+}
 
 export default App;
