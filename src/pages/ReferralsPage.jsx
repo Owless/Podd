@@ -98,7 +98,7 @@ const ReferralsPage = () => {
 
       <div className="bg-purple-800 rounded-xl shadow-md p-6 mb-6 text-white">
         <h2 className="text-xl font-semibold mb-4">Твоя реферальная ссылка</h2>
-        <div className="flex flex-col gap-2 mb-4">
+        <div className="flex flex-col gap-4 mb-4">
           <div className="relative">
             <input
               type="text"
@@ -113,23 +113,13 @@ const ReferralsPage = () => {
               Копировать
             </button>
           </div>
-        </div>
-        <div className="flex flex-col gap-2">
-          <div className="font-medium">Или используй код:</div>
-          <div className="relative">
-            <input
-              type="text"
-              value={referralData.referral_code}
-              className="w-full p-3 border border-purple-700 rounded-lg bg-purple-700 text-white placeholder-purple-300"
-              readOnly
-            />
-            <button
-              onClick={() => copyToClipboard(referralData.referral_code, 'Код')}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white text-purple-800 py-1 px-3 rounded-md text-sm font-medium hover:bg-gray-100"
-            >
-              Копировать
-            </button>
-          </div>
+          
+          <button
+            onClick={() => copyToClipboard(referralData.referral_link, 'Ссылка')}
+            className="w-full bg-white text-purple-800 py-3 px-4 rounded-lg text-center font-bold hover:bg-gray-100 transition-colors"
+          >
+            Скопировать ссылку
+          </button>
         </div>
       </div>
 
@@ -139,10 +129,6 @@ const ReferralsPage = () => {
           <div className="bg-purple-100 p-4 rounded-xl text-center">
             <span className="block text-2xl font-bold text-purple-800">{referralData.total_referrals}</span>
             <span className="text-purple-800">Всего рефералов</span>
-          </div>
-          <div className="bg-purple-100 p-4 rounded-xl text-center">
-            <span className="block text-2xl font-bold text-purple-800">{referralData.active_referrals}</span>
-            <span className="text-purple-800">Ожидается бонусов</span>
           </div>
           <div className="bg-purple-100 p-4 rounded-xl text-center">
             <span className="block text-2xl font-bold text-purple-800">{referralData.earned_days}</span>
@@ -159,7 +145,7 @@ const ReferralsPage = () => {
               <span className="font-bold text-purple-800">1</span>
             </div>
             <div>
-              <h3 className="font-medium text-gray-800">Поделись своей ссылкой</h3>
+              <h3 className="font-medium text-gray-800">Поделись ссылкой</h3>
               <p className="text-gray-600 mt-1">Отправь уникальную реферальную ссылку друзьям через любой мессенджер</p>
             </div>
           </div>
@@ -168,8 +154,8 @@ const ReferralsPage = () => {
               <span className="font-bold text-purple-800">2</span>
             </div>
             <div>
-              <h3 className="font-medium text-gray-800">Друзья подписываются</h3>
-              <p className="text-gray-600 mt-1">Когда друзья регистрируются по твоей ссылке и оформляют подписку</p>
+              <h3 className="font-medium text-gray-800">При входе в приложение</h3>
+              <p className="text-gray-600 mt-1">Когда друг регистрируется по твоей ссылке, вы оба получаете 5 дней бесплатной подписки</p>
             </div>
           </div>
           <div className="flex items-start">
@@ -177,8 +163,8 @@ const ReferralsPage = () => {
               <span className="font-bold text-purple-800">3</span>
             </div>
             <div>
-              <h3 className="font-medium text-gray-800">Вы оба получаете награду</h3>
-              <p className="text-gray-600 mt-1">Вы оба получаете 5 дней подписки бесплатно! Если друг приобретает годовой план, ты получаешь дополнительные 30 дней!</p>
+              <h3 className="font-medium text-gray-800">Дополнительный бонус</h3>
+              <p className="text-gray-600 mt-1">При оформлении другом подписки на год ты получишь 30 дней бесплатной подписки</p>
             </div>
           </div>
         </div>
