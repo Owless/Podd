@@ -109,13 +109,13 @@ const SubscriptionBanner = () => {
       });
       
       if (result.success && result.payment_url) {
+        // Store payment token in localStorage
+        if (result.payment_token) {
+          localStorage.setItem('paymentToken', result.payment_token);
+        }
+        
         // Open the payment URL
         WebApp.openTelegramLink(result.payment_url);
-        
-        // Set a timer to check subscription status after return
-        setTimeout(() => {
-          checkPaymentStatus();
-        }, 2000);
       } else {
         setError(result.error || 'Не удалось создать подписку');
       }
@@ -240,10 +240,9 @@ const SubscriptionBanner = () => {
         {isExpiringSoon && (
           <button
             onClick={handleOpenPlans}
-            disabled={loading}
             className="py-3 px-5 bg-purple-800 hover:bg-purple-900 text-white font-medium rounded-xl text-sm"
           >
-            {loading ? 'Загрузка...' : 'Оформить подписку'}
+            {loading ? 'Загрузка...' : 'Продлить'}
           </button>
         )}
       </div>
