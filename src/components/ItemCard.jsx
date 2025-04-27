@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-const ItemCard = ({ item, onDelete, onEdit, expandedItemId, setExpandedItemId }) => {
+const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
   const [position, setPosition] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startPos = useRef(0);
@@ -81,11 +81,6 @@ const ItemCard = ({ item, onDelete, onEdit, expandedItemId, setExpandedItemId })
     if (window.confirm('Удалить товар из отслеживания?')) {
       onDelete(item.id);
     }
-  };
-
-  const handleEditClick = (e) => {
-    e.stopPropagation();
-    onEdit(item);
   };
 
   const handleCardClick = (e) => {
@@ -196,23 +191,15 @@ const ItemCard = ({ item, onDelete, onEdit, expandedItemId, setExpandedItemId })
               <div className="text-xs text-gray-500 mb-2">
                 Проверено: {new Date(item.last_checked).toLocaleString('ru-RU')}
               </div>
-              <div className="flex gap-2">
-                <a
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 text-sm py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg text-center"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Открыть товар
-                </a>
-                <button
-                  onClick={handleEditClick}
-                  className="flex-1 text-sm py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-center"
-                >
-                  Изменить цену
-                </button>
-              </div>
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-sm py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg text-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Открыть товар
+              </a>
             </div>
           )}
         </div>
