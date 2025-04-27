@@ -110,15 +110,15 @@ const ProfilePage = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center p-4 h-screen bg-gray-50">
+      <div className="flex flex-col items-center justify-center p-4 h-screen bg-gray-100">
         <div className="animate-pulse w-full max-w-md">
-          <div className="bg-white rounded-lg shadow-md p-6 mb-4">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-4 border-t-4 border-purple-600">
             <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
             <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
             <div className="h-4 bg-gray-200 rounded w-full mb-6"></div>
             <div className="h-10 bg-purple-200 rounded w-full"></div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg shadow-md p-6 border-t-4 border-green-500">
             <div className="h-6 bg-gray-200 rounded w-2/3 mb-4"></div>
             <div className="h-20 bg-gray-200 rounded w-full"></div>
           </div>
@@ -128,9 +128,9 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="flex flex-col p-4 pb-20 bg-gray-50 min-h-screen">
+    <div className="flex flex-col p-4 pb-20 bg-gray-100 min-h-screen">
       {/* User Profile Card */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-4">
+      <div className="bg-white rounded-lg shadow-md p-6 mb-4 border-t-4 border-purple-600">
         <div className="flex items-center mb-4">
           <div className="bg-purple-600 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold mr-4">
             {user?.first_name?.charAt(0) || 'U'}
@@ -155,10 +155,13 @@ const ProfilePage = () => {
           </div>
         </div>
         
+        {/* Divider */}
+        <div className="border-t border-gray-200 my-4"></div>
+        
         {/* Referral Program Teaser */}
         {referralInfo && (
           <div 
-            className="bg-gradient-to-r from-purple-100 to-indigo-100 p-4 rounded-lg mb-4 cursor-pointer"
+            className="bg-gradient-to-r from-purple-100 to-blue-100 p-4 rounded-lg mb-4 cursor-pointer border border-purple-200 shadow-sm"
             onClick={goToReferrals}
           >
             <div className="flex justify-between items-center">
@@ -179,17 +182,17 @@ const ProfilePage = () => {
       </div>
       
       {/* Subscription Plans */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-4">
+      <div className="bg-white rounded-lg shadow-md p-6 mb-4 border-t-4 border-green-500">
         <h3 className="text-xl font-bold mb-4">Тарифы подписки</h3>
         
         {Object.entries(subscriptionPlans)
           .sort((a, b) => a[1].days - b[1].days) // Sort by duration
           .map(([planId, plan]) => (
-            <div key={planId} className="border rounded-lg p-4 mb-3 last:mb-0">
+            <div key={planId} className="border rounded-lg p-4 mb-3 last:mb-0 border-gray-300 bg-gray-50">
               <div className="flex justify-between items-center mb-2">
                 <h4 className="font-bold text-lg">{plan.name}</h4>
                 {plan.discount > 0 && (
-                  <span className="bg-red-500 text-white px-2 py-1 text-xs rounded-full">
+                  <span className="bg-green-500 text-white px-2 py-1 text-xs rounded-full">
                     -{plan.discount}%
                   </span>
                 )}
@@ -199,17 +202,17 @@ const ProfilePage = () => {
               
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="font-bold text-xl">{plan.price} ₽</span>
+                  <span className="font-bold text-xl">{plan.price} ⭐</span>
                   {plan.discount > 0 && (
                     <span className="text-gray-500 text-sm line-through ml-2">
-                      {Math.round(plan.price / (1 - plan.discount / 100))} ₽
+                      {Math.round(plan.price / (1 - plan.discount / 100))} ⭐
                     </span>
                   )}
                 </div>
                 
                 <button 
                   onClick={() => handleSubscription(planId)}
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg"
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg shadow"
                 >
                   Оформить
                 </button>
@@ -219,15 +222,17 @@ const ProfilePage = () => {
       </div>
       
       {/* App Info */}
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-lg shadow-md p-6 border-t-4 border-blue-500">
         <h3 className="text-xl font-bold mb-4">О приложении</h3>
         <p className="text-gray-600 mb-4">
           Трекер цен Wildberries позволяет отслеживать изменения цен на товары и получать уведомления 
           о снижении цены или достижении желаемой стоимости.
         </p>
-        <div className="flex justify-between text-sm text-gray-500">
-          <span>Версия: 1.0.0</span>
-          <a href="#" className="text-purple-600">Условия использования</a>
+        <div className="border-t border-gray-200 pt-4 mt-4">
+          <div className="flex justify-between text-sm text-gray-500">
+            <span>Версия: 1.0.0</span>
+            <a href="#" className="text-purple-600">Условия использования</a>
+          </div>
         </div>
       </div>
     </div>
