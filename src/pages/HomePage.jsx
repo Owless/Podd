@@ -89,7 +89,7 @@ const HomePage = () => {
           <div className="w-10 h-10 border-2 border-purple-800 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : (
-        <div className="mt-2">
+        <div className="mt-2 mb-20">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-800">
               Ваши товары
