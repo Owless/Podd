@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getUserItems, deleteItem, updateItem } from '../services/api';
+import { getUserItems, deleteItem } from '../services/api';
 import { useApp } from '../contexts/AppContext';
 import Layout from '../components/Layout';
 import ItemCard from '../components/ItemCard';
@@ -75,19 +75,15 @@ const HomePage = () => {
   // Обработчик сохранения изменений
   const handleSaveEdit = async (itemId, newDesiredPrice) => {
     try {
-      // Предполагается наличие API функции updateItem
-      const response = await updateItem(itemId, { desired_price: newDesiredPrice }, user.telegram_id);
-      
-      if (response.success) {
-        setItems((prevItems) => 
-          prevItems.map(item => 
-            item.id === itemId ? { ...item, desired_price: newDesiredPrice } : item
-          )
-        );
-        setEditingItem(null);
-      } else {
-        alert(response.error || 'Не удалось обновить цену');
-      }
+      // Временное решение до реализации API функции updateItem
+      // Только обновляем локальное состояние
+      setItems((prevItems) => 
+        prevItems.map(item => 
+          item.id === itemId ? { ...item, desired_price: newDesiredPrice } : item
+        )
+      );
+      setEditingItem(null);
+      alert('Цена обновлена (локально). API обновления в разработке.');
     } catch (err) {
       alert('Произошла ошибка при обновлении цены');
       console.error(err);
