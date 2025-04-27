@@ -108,9 +108,6 @@ const ReferralsPage = () => {
             />
             <button
               onClick={() => copyToClipboard(referralData.referral_link, 'Ссылка')}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white text-purple-800 py-1 px-3 rounded-md text-sm font-medium hover:bg-gray-100"
-            >
-              Копировать
             </button>
           </div>
           
