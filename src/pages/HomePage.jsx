@@ -15,7 +15,6 @@ const HomePage = () => {
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [expandedItemId, setExpandedItemId] = useState(null);
-  const [editingItem, setEditingItem] = useState(null);
 
   // Загрузка товаров пользователя
   useEffect(() => {
@@ -63,29 +62,6 @@ const HomePage = () => {
       }
     } catch (err) {
       alert('Произошла ошибка при удалении товара');
-      console.error(err);
-    }
-  };
-
-  // Обработчик редактирования товара - открывает модальное окно
-  const handleEditItem = (item) => {
-    setEditingItem(item);
-  };
-
-  // Обработчик сохранения изменений
-  const handleSaveEdit = async (itemId, newDesiredPrice) => {
-    try {
-      // Временное решение до реализации API функции updateItem
-      // Только обновляем локальное состояние
-      setItems((prevItems) => 
-        prevItems.map(item => 
-          item.id === itemId ? { ...item, desired_price: newDesiredPrice } : item
-        )
-      );
-      setEditingItem(null);
-      alert('Цена обновлена (локально). API обновления в разработке.');
-    } catch (err) {
-      alert('Произошла ошибка при обновлении цены');
       console.error(err);
     }
   };
@@ -146,66 +122,12 @@ const HomePage = () => {
                   key={item.id} 
                   item={item} 
                   onDelete={handleDeleteItem}
-                  onEdit={handleEditItem}
                   expandedItemId={expandedItemId}
                   setExpandedItemId={setExpandedItemId}
                 />
               ))}
             </div>
           )}
-        </div>
-      )}
-
-      {/* Modal for editing desired price */}
-      {editingItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-4 w-full max-w-sm mx-4">
-            <h3 className="text-lg font-semibold mb-3">Изменить желаемую цену</h3>
-            <div className="text-sm mb-4 line-clamp-1">{editingItem.title}</div>
-            
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const newPrice = parseFloat(e.target.price.value);
-              if (isNaN(newPrice) || newPrice <= 0) {
-                alert('Пожалуйста, введите корректную цену');
-                return;
-              }
-              handleSaveEdit(editingItem.id, newPrice);
-            }}>
-              <div className="mb-4">
-                <label className="block text-sm text-gray-700 mb-1">Текущая цена: {new Intl.NumberFormat('ru-RU', {
-                  style: 'currency',
-                  currency: 'RUB',
-                  minimumFractionDigits: 0
-                }).format(editingItem.current_price)}</label>
-                <input 
-                  type="number" 
-                  name="price"
-                  defaultValue={editingItem.desired_price}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  min="1"
-                  step="any"
-                  required
-                />
-              </div>
-              
-              <div className="flex space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingItem(null)}
-                  className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg"
-                >
-                  Отмена
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2 bg-purple-600 text-white rounded-lg"
-                >
-                  Сохранить
-                </button>
-              </div>
-            </form>
-          </div>
         </div>
       )}
     </Layout>
