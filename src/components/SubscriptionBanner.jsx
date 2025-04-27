@@ -238,12 +238,15 @@ const SubscriptionBanner = () => {
         </div>
         
         {isExpiringSoon && (
-          <button
-            onClick={handleOpenPlans}
-            className="py-3 px-5 bg-purple-800 hover:bg-purple-900 text-white font-medium rounded-xl text-sm"
-          >
-            {loading ? 'Загрузка...' : 'Продлить'}
-          </button>
+        <button
+          onClick={handleOpenPlans}
+          className="py-3 px-5 bg-purple-800 hover:bg-purple-900 text-white font-medium rounded-xl text-sm whitespace-nowrap flex items-center justify-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 11V9a2 2 0 00-2-2m2 4v4a2 2 0 104 0v-1m-4-3H9m2 0h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Продлить
+        </button>
         )}
       </div>
     );
