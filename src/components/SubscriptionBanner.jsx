@@ -189,10 +189,17 @@ const SubscriptionBanner = () => {
   // Если подписка активна
   if (user?.subscription_active) {
     const endDate = new Date(user.subscription_end_date);
+    
+    // Формат даты и времени
     const formattedDate = endDate.toLocaleDateString('ru-RU', {
       day: 'numeric',
       month: 'long',
       year: 'numeric'
+    });
+    
+    const formattedTime = endDate.toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
     
     const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
@@ -211,11 +218,14 @@ const SubscriptionBanner = () => {
           </div>
           
           <p className="text-sm text-green-700 mt-1">
-            {isExpiringSoon 
-              ? `Ваша подписка действует до ${formattedDate}. Осталось ${daysLeft} дн.` 
-              : `Ваша подписка действует до ${formattedDate}`
-            }
+            Ваша подписка действует до {formattedDate} {formattedTime}
           </p>
+          
+          {isExpiringSoon && (
+            <p className="text-sm text-amber-700 font-medium mt-1">
+              Осталось {daysLeft} дн.
+            </p>
+          )}
           
           {error && (
             <p className="text-sm text-red-600 mt-1">{error}</p>
@@ -228,7 +238,7 @@ const SubscriptionBanner = () => {
             disabled={loading}
             className="py-3 px-5 bg-purple-800 hover:bg-purple-900 text-white font-medium rounded-xl text-sm"
           >
-            {loading ? 'Загрузка...' : 'Продлить'}
+            {loading ? 'Загрузка...' : 'Оформить подписку'}
           </button>
         )}
       </div>
@@ -271,7 +281,7 @@ const SubscriptionBanner = () => {
                     <div className="flex items-center">
                       <div className="flex-1">
                         <div className="flex items-center">
-                          <h4 className="font-medium">{plan.name}</h4>
+                          <h4 className="font-medium text-gray-800">{plan.name}</h4>
                           {plan.discount && (
                             <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
                               -{plan.discount}%
@@ -281,7 +291,7 @@ const SubscriptionBanner = () => {
                         <p className="text-sm text-gray-600">{plan.description}</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold">{plan.price} ⭐</div>
+                        <div className="text-lg font-bold text-gray-800">{plan.price} ⭐</div>
                       </div>
                     </div>
                   </div>
