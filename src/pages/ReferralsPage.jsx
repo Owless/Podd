@@ -99,16 +99,13 @@ const ReferralsPage = () => {
       <div className="bg-purple-800 rounded-xl shadow-md p-6 mb-6 text-white">
         <h2 className="text-xl font-semibold mb-4">Твоя реферальная ссылка</h2>
         <div className="flex flex-col gap-4 mb-4">
-          <div className="relative">
+          <div>
             <input
               type="text"
               value={referralData.referral_link}
               className="w-full p-3 border border-purple-700 rounded-lg bg-purple-700 text-white placeholder-purple-300"
               readOnly
             />
-            <button
-              onClick={() => copyToClipboard(referralData.referral_link, 'Ссылка')}
-            </button>
           </div>
           
           <button
