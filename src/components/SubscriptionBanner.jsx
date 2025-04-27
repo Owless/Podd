@@ -21,6 +21,7 @@ const SubscriptionBanner = () => {
         const result = await getSubscriptionPlans();
         if (result.success) {
           setPlans(result.plans);
+          console.log("Loaded subscription plans:", result.plans);
         }
       } catch (err) {
         console.error('Error loading plans:', err);
@@ -69,13 +70,16 @@ const SubscriptionBanner = () => {
 
   // Обработчик открытия планов
   const handleOpenPlans = () => {
+    console.log("handleOpenPlans called");
     setShowPlans(true);
     setSelectedPlan(null);
     setPaymentUrl('');
     setShowPaymentInstructions(false);
+    console.log("showPlans set to true");
   };
 
   const handleClosePlans = () => {
+    console.log("handleClosePlans called");
     setShowPlans(false);
     setSelectedPlan(null);
     setPaymentUrl('');
@@ -83,6 +87,7 @@ const SubscriptionBanner = () => {
   };
 
   const handleSelectPlan = (planId) => {
+    console.log("Selected plan:", planId);
     setSelectedPlan(planId);
   };
 
@@ -95,6 +100,7 @@ const SubscriptionBanner = () => {
     try {
       setLoading(true);
       setError('');
+      console.log("Starting subscription process for plan:", selectedPlan);
       
       if (isDevMode) {
         alert('В режиме разработки подписка не доступна');
@@ -108,20 +114,25 @@ const SubscriptionBanner = () => {
         plan_id: selectedPlan
       });
       
+      console.log("Subscription creation result:", result);
+      
       if (result.success && result.payment_url) {
         // Store payment token in localStorage
         if (result.payment_token) {
           localStorage.setItem('paymentToken', result.payment_token);
+          console.log("Payment token saved:", result.payment_token);
         }
         
         // Open the payment URL
+        console.log("Opening payment URL:", result.payment_url);
         WebApp.openTelegramLink(result.payment_url);
       } else {
         setError(result.error || 'Не удалось создать подписку');
+        console.error("Subscription creation failed:", result.error);
       }
     } catch (err) {
       setError('Произошла ошибка при создании подписки');
-      console.error(err);
+      console.error('Error during subscription:', err);
     } finally {
       setLoading(false);
     }
@@ -191,6 +202,14 @@ const SubscriptionBanner = () => {
     );
   };
   
+  // Отладочная информация - убрать в продакшене
+  console.log("Current state:", {
+    showPlans,
+    user: user?.subscription_active,
+    daysLeft: user?.subscription_active ? Math.ceil((new Date(user.subscription_end_date) - new Date()) / (1000 * 60 * 60 * 24)) : null,
+    isExpiringSoon: user?.subscription_active ? Math.ceil((new Date(user.subscription_end_date) - new Date()) / (1000 * 60 * 60 * 24)) <= 3 : false
+  });
+  
   // Если подписка активна
   if (user?.subscription_active) {
     const endDate = new Date(user.subscription_end_date);
@@ -209,6 +228,9 @@ const SubscriptionBanner = () => {
     
     const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
     const isExpiringSoon = daysLeft <= 3;
+    
+    // Принудительно показываем кнопку продления всегда, не только для истекающей подписки
+    const alwaysShowRenewButton = true;
     
     return (
       <div className={`bg-white rounded-xl p-5 shadow-md border mb-6 flex flex-col md:flex-row md:items-center gap-4 ${isExpiringSoon ? 'border-amber-300 bg-amber-50' : 'border-green-200 bg-green-50'}`}>
@@ -237,16 +259,17 @@ const SubscriptionBanner = () => {
           )}
         </div>
         
-        {isExpiringSoon && (
-        <button
-          onClick={handleOpenPlans}
-          className="py-3 px-5 bg-purple-800 hover:bg-purple-900 text-white font-medium rounded-xl text-sm whitespace-nowrap flex items-center justify-center gap-2"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 11V9a2 2 0 00-2-2m2 4v4a2 2 0 104 0v-1m-4-3H9m2 0h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Продлить
-        </button>
+        {/* Показываем кнопку продления всегда, не только для истекающей подписки */}
+        {(isExpiringSoon || alwaysShowRenewButton) && (
+          <button
+            onClick={() => {
+              console.log("Renew button clicked");
+              handleOpenPlans();
+            }}
+            className="py-3 px-5 bg-purple-800 hover:bg-purple-900 text-white font-medium rounded-xl text-sm whitespace-nowrap"
+          >
+            {loading ? 'Загрузка...' : 'Продлить'}
+          </button>
         )}
       </div>
     );
@@ -254,6 +277,7 @@ const SubscriptionBanner = () => {
   
   // Если показываем планы
   if (showPlans) {
+    console.log("Rendering plans selection view");
     return (
       <div className="bg-white rounded-xl p-5 shadow-md border border-blue-200 bg-blue-50 mb-6">
         <div className="flex justify-between items-center mb-4">
@@ -370,7 +394,7 @@ const SubscriptionBanner = () => {
                     </svg>
                     Оформление...
                   </>
-                ) : 'Оформить подписку'}
+                ) : (user?.subscription_active ? 'Продлить подписку' : 'Оформить подписку')}
               </button>
             </div>
           </>
