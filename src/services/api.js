@@ -12,12 +12,18 @@ const api = axios.create({
 // Инициализация пользователя
 export const initUser = async (userData) => {
   try {
-    // Ensure we're passing both referral_code and start_param if available
-    const response = await api.post('/api/user/init', {
+    // Формируем тело запроса
+    const payload = {
       ...userData,
       referral_code: userData.referral_code || null,
       start_param: userData.start_param || window.Telegram?.WebApp?.startParam || null
-    });
+    };
+
+    // Логируем тело запроса ПЕРЕД отправкой
+    console.log('Sending payload to /api/user/init:', JSON.stringify(payload, null, 2));
+
+    // Отправляем запрос
+    const response = await api.post('/api/user/init', payload);
     return response.data;
   } catch (error) {
     console.error('Error initializing user:', error);
