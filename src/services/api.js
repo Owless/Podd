@@ -12,7 +12,12 @@ const api = axios.create({
 // Инициализация пользователя
 export const initUser = async (userData) => {
   try {
-    const response = await api.post('/api/user/init', userData);
+    // Ensure we're passing both referral_code and start_param if available
+    const response = await api.post('/api/user/init', {
+      ...userData,
+      referral_code: userData.referral_code || null,
+      start_param: userData.start_param || window.Telegram?.WebApp?.startParam || null
+    });
     return response.data;
   } catch (error) {
     console.error('Error initializing user:', error);
@@ -156,6 +161,51 @@ export const processSubscription = async (data) => {
     return response.data;
   } catch (error) {
     console.error('Error processing subscription:', error);
+    return {
+      success: false,
+      error: error.response?.data?.error || error.message,
+    };
+  }
+};
+
+// Создание реферальной ссылки
+export const createReferralLink = async (telegramId) => {
+  try {
+    const response = await api.post('/api/user/create-referral-link', { telegram_id: telegramId });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating referral link:', error);
+    return {
+      success: false,
+      error: error.response?.data?.error || error.message,
+    };
+  }
+};
+
+// Применение реферального кода
+export const applyReferralCode = async (telegramId, referralCode) => {
+  try {
+    const response = await api.post('/api/user/apply-referral', { 
+      telegram_id: telegramId,
+      referral_code: referralCode
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error applying referral code:', error);
+    return {
+      success: false,
+      error: error.response?.data?.error || error.message,
+    };
+  }
+};
+
+// Получение статистики по рефералам
+export const getReferralStats = async (telegramId) => {
+  try {
+    const response = await api.get(`/api/user/referral-stats?telegram_id=${telegramId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching referral statistics:', error);
     return {
       success: false,
       error: error.response?.data?.error || error.message,
