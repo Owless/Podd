@@ -131,7 +131,7 @@ const ReferralsPage = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-20">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Как это работает</h2>
         <div className="space-y-6">
           <div className="flex items-start">
