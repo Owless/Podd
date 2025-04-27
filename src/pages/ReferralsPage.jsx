@@ -52,12 +52,12 @@ const ReferralsPage = () => {
   const copyToClipboard = (text, type) => {
     navigator.clipboard.writeText(text)
       .then(() => {
-        setCopyNotification(`${type} скопирован!`);
+        setCopyNotification(`${type} скопирована!`);
         setTimeout(() => setCopyNotification(''), 2000);
       })
       .catch(err => {
         console.error('Failed to copy:', err);
-        setCopyNotification('Не удалось скопировать текст');
+        setCopyNotification('Не удалось скопировать ссылку');
       });
   };
 
