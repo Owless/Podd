@@ -93,13 +93,20 @@ const AddItemForm = ({ onItemAdded }) => {
             Желаемая цена (опционально)
           </label>
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             id="desiredPrice"
             className="bg-gray-50 text-gray-800 border border-gray-200 rounded-xl py-3 px-4 w-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
             placeholder="Например, 1000"
             value={desiredPrice}
-            onChange={(e) => setDesiredPrice(e.target.value)}
+            onChange={(e) => {
+              // Only allow numeric input
+              const value = e.target.value.replace(/[^0-9]/g, '');
+              setDesiredPrice(value);
+            }}
             disabled={loading}
+            style={{ WebkitAppearance: 'none', MozAppearance: 'textfield' }}
           />
           <p className="text-xs text-gray-500 mt-1">
             Оставьте пустым для автоматической установки (скидка 10%)
