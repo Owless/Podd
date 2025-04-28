@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import WebApp from '@twa-dev/sdk';
 import { useApp } from '../contexts/AppContext';
-import { getSubscriptionPlans, createSubscription, checkSubscription } from '../services/api';
+import { getSubscriptionPlans, createSubscription } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const SubscriptionBanner = () => {
   const { user, isDevMode, refreshUserData } = useApp();
@@ -10,9 +11,9 @@ const SubscriptionBanner = () => {
   const [showPlans, setShowPlans] = useState(false);
   const [plans, setPlans] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [paymentUrl, setPaymentUrl] = useState('');
   const [showPaymentInstructions, setShowPaymentInstructions] = useState(false);
   const [showStarsHelp, setShowStarsHelp] = useState(false);
+  const navigate = useNavigate();
 
   // Загрузка планов подписки
   useEffect(() => {
@@ -31,27 +32,43 @@ const SubscriptionBanner = () => {
     loadPlans();
   }, []);
 
-  // Проверка статуса оплаты при возвращении в приложение или через периодический интервал
+  // Проверка статуса оплаты и обновление данных
   useEffect(() => {
+    let checkIntervalId;
+    
     const checkPaymentStatus = async () => {
       try {
         const paymentToken = localStorage.getItem('paymentToken');
+        const previousSubscriptionStatus = localStorage.getItem('previousSubscriptionStatus');
         
         if (paymentToken) {
           console.log('Checking payment status...');
-          // Ensure we have the latest user data before checking subscription
-          await refreshUserData();
           
-          // Get the latest user data after refresh
-          const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+          // Принудительно обновляем данные пользователя с сервера
+          const updatedUser = await refreshUserData();
           
-          if (currentUser && currentUser.subscription_active) {
-            localStorage.removeItem('paymentToken');
-            WebApp.showPopup({
-              title: "Поздравляем!",
-              message: "Подписка успешно активирована!",
-              buttons: [{ type: "ok" }]
-            });
+          if (updatedUser && updatedUser.subscription_active) {
+            console.log('Subscription is now active!');
+            
+            // Если статус подписки изменился, показываем поздравление и сбрасываем состояние
+            if (previousSubscriptionStatus === 'false') {
+              // Очищаем хранилище
+              localStorage.removeItem('paymentToken');
+              localStorage.removeItem('previousSubscriptionStatus');
+              
+              // Закрываем панель выбора плана
+              setShowPlans(false);
+              
+              // Показываем поздравление
+              WebApp.showPopup({
+                title: "Поздравляем!",
+                message: "Подписка успешно активирована!",
+                buttons: [{ type: "ok" }]
+              });
+              
+              // Перенаправляем на главную страницу
+              navigate('/', { replace: true });
+            }
           }
         }
       } catch (err) {
@@ -59,35 +76,35 @@ const SubscriptionBanner = () => {
       }
     };
 
-    // Check immediately when this component renders
+    // Проверяем статус каждые 3 секунды, но не так часто, чтобы мешать работе с товарами
+    checkIntervalId = setInterval(checkPaymentStatus, 3000);
+    
+    // Также проверяем при фокусе на приложении
+    const handleAppFocus = () => {
+      checkPaymentStatus();
+    };
+    
+    window.addEventListener('focus', handleAppFocus);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        handleAppFocus();
+      }
+    });
+    
+    // Запускаем первую проверку
     checkPaymentStatus();
     
-    // Set up event listener for when app regains focus
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        checkPaymentStatus();
-      }
-    };
-    
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    window.addEventListener('focus', checkPaymentStatus);
-    
-    // Set up polling interval (every 5 seconds)
-    const intervalId = setInterval(checkPaymentStatus, 5000);
-    
     return () => {
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-      window.removeEventListener('focus', checkPaymentStatus);
-      clearInterval(intervalId);
+      clearInterval(checkIntervalId);
+      window.removeEventListener('focus', handleAppFocus);
     };
-  }, [refreshUserData]);
+  }, [refreshUserData, navigate]);
 
   // Обработчик открытия планов
   const handleOpenPlans = () => {
     console.log("handleOpenPlans called");
     setShowPlans(true);
     setSelectedPlan(null);
-    setPaymentUrl('');
     setShowPaymentInstructions(false);
     console.log("showPlans set to true");
   };
@@ -96,7 +113,6 @@ const SubscriptionBanner = () => {
     console.log("handleClosePlans called");
     setShowPlans(false);
     setSelectedPlan(null);
-    setPaymentUrl('');
     setShowPaymentInstructions(false);
   };
 
@@ -122,6 +138,9 @@ const SubscriptionBanner = () => {
         return;
       }
       
+      // Сохраняем текущий статус подписки для сравнения позже
+      localStorage.setItem('previousSubscriptionStatus', user?.subscription_active ? 'true' : 'false');
+      
       // Create subscription
       const result = await createSubscription({
         telegram_id: user.telegram_id,
@@ -134,8 +153,6 @@ const SubscriptionBanner = () => {
         // Store payment token in localStorage
         if (result.payment_token) {
           localStorage.setItem('paymentToken', result.payment_token);
-          // Store current user state to check against after payment
-          localStorage.setItem('currentUser', JSON.stringify(user));
           console.log("Payment token saved:", result.payment_token);
         }
         
