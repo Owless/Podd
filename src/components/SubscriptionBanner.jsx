@@ -31,25 +31,27 @@ const SubscriptionBanner = () => {
     loadPlans();
   }, []);
 
-  // Проверка статуса оплаты при возвращении в приложение
+  // Проверка статуса оплаты при возвращении в приложение или через периодический интервал
   useEffect(() => {
-    const checkPaymentOnResume = async () => {
+    const checkPaymentStatus = async () => {
       try {
         const paymentToken = localStorage.getItem('paymentToken');
+        
         if (paymentToken) {
           console.log('Checking payment status...');
-          const result = await checkSubscription({
-            telegram_id: user.telegram_id
-          });
+          // Ensure we have the latest user data before checking subscription
+          await refreshUserData();
           
-          if (result.success && result.subscription.active) {
+          // Get the latest user data after refresh
+          const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+          
+          if (currentUser && currentUser.subscription_active) {
             localStorage.removeItem('paymentToken');
             WebApp.showPopup({
               title: "Поздравляем!",
               message: "Подписка успешно активирована!",
               buttons: [{ type: "ok" }]
             });
-            refreshUserData();
           }
         }
       } catch (err) {
@@ -57,16 +59,28 @@ const SubscriptionBanner = () => {
       }
     };
 
-    // Событие на возвращение в приложение
-    window.addEventListener('focus', checkPaymentOnResume);
+    // Check immediately when this component renders
+    checkPaymentStatus();
     
-    // Проверяем сразу при загрузке
-    checkPaymentOnResume();
+    // Set up event listener for when app regains focus
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkPaymentStatus();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', checkPaymentStatus);
+    
+    // Set up polling interval (every 5 seconds)
+    const intervalId = setInterval(checkPaymentStatus, 5000);
     
     return () => {
-      window.removeEventListener('focus', checkPaymentOnResume);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', checkPaymentStatus);
+      clearInterval(intervalId);
     };
-  }, [user.telegram_id, refreshUserData]);
+  }, [refreshUserData]);
 
   // Обработчик открытия планов
   const handleOpenPlans = () => {
@@ -120,6 +134,8 @@ const SubscriptionBanner = () => {
         // Store payment token in localStorage
         if (result.payment_token) {
           localStorage.setItem('paymentToken', result.payment_token);
+          // Store current user state to check against after payment
+          localStorage.setItem('currentUser', JSON.stringify(user));
           console.log("Payment token saved:", result.payment_token);
         }
         
