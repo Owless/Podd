@@ -110,12 +110,19 @@ export const useAppState = () => {
     if (!user || !user.telegram_id) return;
     
     try {
+      console.log('Refreshing user data...');
       const userData = await getUserInfo(user.telegram_id);
       if (userData.success) {
+        console.log('User data refreshed successfully:', userData.user);
         setUser(userData.user);
+        return userData.user;
+      } else {
+        console.error('Failed to refresh user data:', userData.error);
+        return null;
       }
     } catch (error) {
       console.error('Error refreshing user data:', error);
+      return null;
     }
   };
 
