@@ -93,7 +93,7 @@ export const getProductInfo = async (articleId) => {
 // Получение информации о пользователе
 export const getUserInfo = async (telegramId) => {
   try {
-    const response = await api.get(`/api/users/info?telegram_id=${telegramId}`);
+    const response = await api.get(`/api/user/info?telegram_id=${telegramId}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching user info:', error);
