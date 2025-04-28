@@ -10,7 +10,7 @@ import { useState, useEffect, useRef } from 'react';
  */
 const useDataPolling = (
   fetchFunction,
-  pollingInterval = 15000, // Увеличиваем интервал до 15 секунд
+  pollingInterval = 60000, // Увеличиваем интервал до 15 секунд
   dependencies = [],
   enabled = true
 ) => {
