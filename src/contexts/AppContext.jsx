@@ -105,23 +105,47 @@ export const useAppState = () => {
     }
   }, [isDevMode]);
 
-  // Функция обновления данных пользователя
-  const refreshUserData = async () => {
-    if (!user || !user.telegram_id) return;
+  // Функция обновления данных пользователя с таймаутом на повтор
+  const refreshUserData = async (retryCount = 0) => {
+    if (!user || !user.telegram_id) return null;
     
     try {
       console.log('Refreshing user data...');
       const userData = await getUserInfo(user.telegram_id);
+      
       if (userData.success) {
         console.log('User data refreshed successfully:', userData.user);
+        // Важно: обновляем локальное состояние пользователя
         setUser(userData.user);
         return userData.user;
       } else {
         console.error('Failed to refresh user data:', userData.error);
+        
+        // Если ошибка и это не последняя попытка, пробуем снова через 500 мс
+        if (retryCount < 3) {
+          console.log(`Retrying refresh (attempt ${retryCount + 1}/3)...`);
+          return new Promise((resolve) => {
+            setTimeout(() => {
+              resolve(refreshUserData(retryCount + 1));
+            }, 500);
+          });
+        }
+        
         return null;
       }
     } catch (error) {
       console.error('Error refreshing user data:', error);
+      
+      // Если ошибка и это не последняя попытка, пробуем снова через 500 мс
+      if (retryCount < 3) {
+        console.log(`Retrying refresh after error (attempt ${retryCount + 1}/3)...`);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve(refreshUserData(retryCount + 1));
+          }, 500);
+        });
+      }
+      
       return null;
     }
   };
