@@ -6,25 +6,44 @@ import AddItemForm from '../components/AddItemForm';
 import ItemCard from '../components/ItemCard';
 import Loading from '../components/Loading';
 import ErrorMessage from '../components/ErrorMessage';
-import useDataPolling from '../hooks/useDataPolling';
 import { getUserItems, deleteItem } from '../services/api';
 
 const HomePage = () => {
   const { user, loading: userLoading, error: userError } = useApp();
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   
-  // Используем хук для опроса данных о товарах
-  const {
-    data: itemsResponse,
-    loading: itemsLoading,
-    error: itemsError,
-    refetch: refetchItems
-  } = useDataPolling(
-    () => getUserItems(user?.telegram_id),
-    15000, // Опрашиваем каждые 15 секунд
-    [user?.telegram_id],
-    !!user?.telegram_id // Включаем опрос только если у нас есть telegram_id
-  );
+  // Загрузка товаров пользователя
+  const loadItems = async () => {
+    if (!user?.telegram_id) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const result = await getUserItems(user.telegram_id);
+      
+      if (result.success) {
+        setItems(result.items || []);
+      } else {
+        setError(result.error || 'Failed to load items');
+      }
+    } catch (err) {
+      console.error('Error loading items:', err);
+      setError(err.message || 'Error loading items');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Загрузка товаров при монтировании компонента
+  useEffect(() => {
+    if (user?.telegram_id) {
+      loadItems();
+    }
+  }, [user?.telegram_id]);
   
   // Открытие формы добавления товара
   const handleAddItemClick = () => {
@@ -39,8 +58,7 @@ const HomePage = () => {
   // Добавление товара
   const handleItemAdded = () => {
     setShowAddForm(false);
-    // Принудительно обновляем список товаров
-    refetchItems();
+    loadItems(); // Перезагружаем список товаров
   };
   
   // Удаление товара
@@ -48,8 +66,7 @@ const HomePage = () => {
     try {
       const result = await deleteItem(itemId, user.telegram_id);
       if (result.success) {
-        // Принудительно обновляем список товаров
-        refetchItems();
+        loadItems(); // Перезагружаем список товаров
       }
     } catch (error) {
       console.error('Error deleting item:', error);
@@ -98,27 +115,27 @@ const HomePage = () => {
             
             {/* Счетчик товаров */}
             <div className="text-sm text-gray-500">
-              {itemsResponse?.items?.length || 0}
+              {items.length}
               {user?.subscription_active ? '' : '/1'}
             </div>
           </div>
           
           {/* Если товары загружаются, показываем индикатор загрузки */}
-          {itemsLoading && !itemsResponse && (
+          {loading && !items.length && (
             <div className="flex justify-center py-6">
               <Loading />
             </div>
           )}
           
           {/* Если произошла ошибка загрузки товаров, показываем сообщение об ошибке */}
-          {itemsError && (
-            <ErrorMessage message={itemsError} />
+          {error && (
+            <ErrorMessage message={error} />
           )}
           
           {/* Список товаров */}
-          {itemsResponse?.items && itemsResponse.items.length > 0 ? (
+          {items.length > 0 ? (
             <div className="space-y-4">
-              {itemsResponse.items.map(item => (
+              {items.map(item => (
                 <ItemCard 
                   key={item.id} 
                   item={item} 
@@ -126,7 +143,7 @@ const HomePage = () => {
                 />
               ))}
             </div>
-          ) : (!itemsLoading && (
+          ) : (!loading && (
             <div className="bg-white rounded-xl p-6 shadow-sm text-center border border-gray-200">
               <p className="text-gray-500 mb-4">У вас пока нет товаров для отслеживания</p>
               <button
@@ -142,15 +159,15 @@ const HomePage = () => {
           ))}
           
           {/* Кнопка добавления товара */}
-          {(itemsResponse?.items?.length > 0 || itemsLoading) && !showAddForm && (
+          {items.length > 0 && !showAddForm && (
             <div className="mt-4 flex justify-center">
               <button
                 onClick={handleAddItemClick}
                 className={`inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors ${
                   // Если у пользователя нет подписки и уже есть товар, блокируем кнопку
-                  (!user.subscription_active && itemsResponse?.items?.length >= 1) ? 'opacity-50 cursor-not-allowed' : ''
+                  (!user.subscription_active && items.length >= 1) ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
-                disabled={!user.subscription_active && itemsResponse?.items?.length >= 1}
+                disabled={!user.subscription_active && items.length >= 1}
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
