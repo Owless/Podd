@@ -38,31 +38,66 @@ const SubscriptionBanner = () => {
     const checkPaymentStatus = async () => {
       try {
         const paymentToken = localStorage.getItem('paymentToken');
+        const previousSubscriptionStatus = localStorage.getItem('previousSubscriptionStatus');
+        const subscriptionOperation = localStorage.getItem('subscriptionOperation');
         
         if (paymentToken) {
           console.log('Checking payment status...');
+          console.log('Previous subscription status:', previousSubscriptionStatus);
+          console.log('Operation type:', subscriptionOperation);
           
           // Принудительно обновляем данные пользователя с сервера
           const updatedUser = await refreshUserData();
           
-          if (updatedUser && updatedUser.subscription_active) {
-            console.log('Subscription is now active!');
+          // Проверяем результат оплаты в зависимости от типа операции
+          if (updatedUser) {
+            let successMessage = "";
+            let paymentSuccessful = false;
             
-            // Очищаем хранилище
-            localStorage.removeItem('paymentToken');
+            // Для новой подписки - проверяем, что статус активен
+            if (subscriptionOperation === 'purchase' && updatedUser.subscription_active) {
+              paymentSuccessful = true;
+              successMessage = "Подписка успешно активирована!";
+            }
+            // Для продления - сравниваем дату окончания с предыдущей
+            else if (subscriptionOperation === 'renewal' && updatedUser.subscription_active) {
+              // Здесь мы фактически проверяем, изменилась ли дата окончания подписки
+              // Это косвенный признак того, что продление прошло успешно
+              const lastEndDate = localStorage.getItem('lastSubscriptionEndDate');
+              const currentEndDate = updatedUser.subscription_end_date;
+              
+              if (lastEndDate && currentEndDate && new Date(currentEndDate) > new Date(lastEndDate)) {
+                paymentSuccessful = true;
+                successMessage = "Подписка успешно продлена!";
+              } else if (!lastEndDate) {
+                // Если lastEndDate отсутствует, мы не можем сравнить, но предполагаем успех
+                paymentSuccessful = true;
+                successMessage = "Подписка успешно обновлена!";
+              }
+            }
             
-            // Закрываем панель выбора плана
-            setShowPlans(false);
-            
-            // Показываем поздравление
-            WebApp.showPopup({
-              title: "Поздравляем!",
-              message: "Подписка успешно активирована!",
-              buttons: [{ type: "ok" }]
-            });
-            
-            // Перенаправляем на главную страницу
-            navigate('/', { replace: true });
+            if (paymentSuccessful) {
+              console.log('Subscription operation successful!');
+              
+              // Очищаем хранилище
+              localStorage.removeItem('paymentToken');
+              localStorage.removeItem('previousSubscriptionStatus');
+              localStorage.removeItem('subscriptionOperation');
+              localStorage.removeItem('lastSubscriptionEndDate');
+              
+              // Закрываем панель выбора плана
+              setShowPlans(false);
+              
+              // Показываем поздравление
+              WebApp.showPopup({
+                title: "Поздравляем!",
+                message: successMessage,
+                buttons: [{ type: "ok" }]
+              });
+              
+              // Перенаправляем на главную страницу
+              navigate('/', { replace: true });
+            }
           }
         }
       } catch (err) {
@@ -113,7 +148,7 @@ const SubscriptionBanner = () => {
     setSelectedPlan(planId);
   };
 
-  // Единый обработчик подписки (для покупки и продления)
+  // Обработчик подписки с различием между покупкой и продлением
   const handleSubscribe = async () => {
     if (!selectedPlan) {
       setError('Выберите план подписки');
@@ -123,7 +158,10 @@ const SubscriptionBanner = () => {
     try {
       setLoading(true);
       setError('');
-      console.log("Starting subscription process for plan:", selectedPlan);
+      
+      // Определяем тип операции (покупка или продление)
+      const isRenewal = user?.subscription_active;
+      console.log(`Starting ${isRenewal ? 'renewal' : 'purchase'} process for plan:`, selectedPlan);
       
       if (isDevMode) {
         alert('В режиме разработки подписка не доступна');
@@ -131,13 +169,18 @@ const SubscriptionBanner = () => {
         return;
       }
       
-      // Единый вызов API для создания/продления подписки
+      // Сохраняем текущий статус подписки для проверки после оплаты
+      localStorage.setItem('previousSubscriptionStatus', isRenewal ? 'true' : 'false');
+      localStorage.setItem('subscriptionOperation', isRenewal ? 'renewal' : 'purchase');
+      
+      // Добавляем тип операции к запросу
       const result = await createSubscription({
         telegram_id: user.telegram_id,
-        plan_id: selectedPlan
+        plan_id: selectedPlan,
+        operation_type: isRenewal ? 'renewal' : 'purchase' // Передаем тип операции на бэкенд
       });
       
-      console.log("Subscription creation result:", result);
+      console.log(`${isRenewal ? 'Renewal' : 'Subscription'} creation result:`, result);
       
       if (result.success && result.payment_url) {
         // Store payment token in localStorage
@@ -150,12 +193,12 @@ const SubscriptionBanner = () => {
         console.log("Opening payment URL:", result.payment_url);
         WebApp.openTelegramLink(result.payment_url);
       } else {
-        setError(result.error || 'Не удалось создать подписку');
-        console.error("Subscription creation failed:", result.error);
+        setError(result.error || `Не удалось ${isRenewal ? 'продлить' : 'создать'} подписку`);
+        console.error(`${isRenewal ? 'Renewal' : 'Subscription'} creation failed:`, result.error);
       }
     } catch (err) {
-      setError('Произошла ошибка при создании подписки');
-      console.error('Error during subscription:', err);
+      setError(`Произошла ошибка при ${user?.subscription_active ? 'продлении' : 'создании'} подписки`);
+      console.error('Error during subscription process:', err);
     } finally {
       setLoading(false);
     }
@@ -274,8 +317,8 @@ const SubscriptionBanner = () => {
               Оформление...
             </>
           ) : (
-            // Унифицированный текст кнопки
-            'Оформить подписку'
+            // Динамический текст кнопки в зависимости от статуса подписки
+            user?.subscription_active ? 'Продлить подписку' : 'Оформить подписку'
           )}
         </button>
       </div>
@@ -291,6 +334,13 @@ const SubscriptionBanner = () => {
   // Если подписка активна
   if (user?.subscription_active) {
     const endDate = new Date(user.subscription_end_date);
+    
+    // Сохраняем текущую дату окончания для сравнения после оплаты
+    useEffect(() => {
+      if (user?.subscription_active && user.subscription_end_date) {
+        localStorage.setItem('lastSubscriptionEndDate', user.subscription_end_date);
+      }
+    }, [user?.subscription_active, user?.subscription_end_date]);
     
     // Формат даты и времени
     const formattedDate = endDate.toLocaleDateString('ru-RU', {
