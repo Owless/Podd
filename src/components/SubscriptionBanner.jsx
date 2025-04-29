@@ -50,25 +50,22 @@ const SubscriptionBanner = () => {
           if (updatedUser && updatedUser.subscription_active) {
             console.log('Subscription is now active!');
             
-            // Если статус подписки изменился, показываем поздравление и сбрасываем состояние
-            if (previousSubscriptionStatus === 'false') {
-              // Очищаем хранилище
-              localStorage.removeItem('paymentToken');
-              localStorage.removeItem('previousSubscriptionStatus');
-              
-              // Закрываем панель выбора плана
-              setShowPlans(false);
-              
-              // Показываем поздравление
-              WebApp.showPopup({
-                title: "Поздравляем!",
-                message: "Подписка успешно активирована!",
-                buttons: [{ type: "ok" }]
-              });
-              
-              // Перенаправляем на главную страницу
-              navigate('/', { replace: true });
-            }
+            // Очищаем хранилище и показываем успешное сообщение независимо от предыдущего статуса
+            localStorage.removeItem('paymentToken');
+            localStorage.removeItem('previousSubscriptionStatus');
+            
+            // Закрываем панель выбора плана
+            setShowPlans(false);
+            
+            // Показываем поздравление
+            WebApp.showPopup({
+              title: "Поздравляем!",
+              message: "Подписка успешно активирована!",
+              buttons: [{ type: "ok" }]
+            });
+            
+            // Перенаправляем на главную страницу
+            navigate('/', { replace: true });
           }
         }
       } catch (err) {
@@ -76,7 +73,7 @@ const SubscriptionBanner = () => {
       }
     };
 
-    // Проверяем статус каждые 3 секунды, но не так часто, чтобы мешать работе с товарами
+    // Проверяем статус каждые 3 секунды
     checkIntervalId = setInterval(checkPaymentStatus, 3000);
     
     // Также проверяем при фокусе на приложении
@@ -100,7 +97,7 @@ const SubscriptionBanner = () => {
     };
   }, [refreshUserData, navigate]);
 
-  // Обработчик открытия планов
+  // Единый обработчик открытия планов (и для покупки, и для продления)
   const handleOpenPlans = () => {
     console.log("handleOpenPlans called");
     setShowPlans(true);
@@ -121,6 +118,7 @@ const SubscriptionBanner = () => {
     setSelectedPlan(planId);
   };
 
+  // Единый обработчик подписки (для покупки и продления)
   const handleSubscribe = async () => {
     if (!selectedPlan) {
       setError('Выберите план подписки');
@@ -138,10 +136,10 @@ const SubscriptionBanner = () => {
         return;
       }
       
-      // Сохраняем текущий статус подписки для сравнения позже
+      // Сохраняем текущий статус подписки для сравнения позже - всегда сохраняем
       localStorage.setItem('previousSubscriptionStatus', user?.subscription_active ? 'true' : 'false');
       
-      // Create subscription
+      // Единый вызов API для создания/продления подписки
       const result = await createSubscription({
         telegram_id: user.telegram_id,
         plan_id: selectedPlan
@@ -388,12 +386,6 @@ const SubscriptionBanner = () => {
     // Всегда показываем кнопку продления
     const showRenewButton = true;
     
-    // Функция обработчик для кнопки Продлить
-    const handleRenewClick = () => {
-      console.log("Renew button clicked");
-      handleOpenPlans();
-    };
-    
     return (
       <div className={`bg-white rounded-xl p-5 shadow-md border mb-6 flex flex-col md:flex-row md:items-center gap-4 ${isExpiringSoon ? 'border-amber-300 bg-amber-50' : 'border-green-200 bg-green-50'}`}>
         <div className="flex-1">
@@ -424,7 +416,7 @@ const SubscriptionBanner = () => {
         {showRenewButton && (
           <button
             type="button"
-            onClick={handleRenewClick}
+            onClick={handleOpenPlans}
             className="py-3 px-5 bg-purple-800 hover:bg-purple-900 text-white font-medium rounded-xl text-sm whitespace-nowrap"
           >
             {loading ? 'Загрузка...' : 'Продлить'}
