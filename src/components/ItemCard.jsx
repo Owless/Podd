@@ -1,13 +1,11 @@
-import React, { useState, useRef, useEffect, memo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
   const [position, setPosition] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [imgError, setImgError] = useState(false);
   const startPos = useRef(0);
   const cardRef = useRef(null);
   const deleteBtnRef = useRef(null);
-  const previousItemRef = useRef(item);
 
   // Increase delete button width
   const DELETE_BTN_WIDTH = 80;
@@ -17,61 +15,25 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
 
   const isExpanded = item.id === expandedItemId;
 
-  // IMPORTANT: Only track meaningful price changes
-  useEffect(() => {
-    if (
-      previousItemRef.current.current_price !== item.current_price ||
-      previousItemRef.current.desired_price !== item.desired_price
-    ) {
-      console.log('Price changed:', {
-        id: item.id,
-        old_price: previousItemRef.current.current_price,
-        new_price: item.current_price
-      });
-      // We need to update the reference so that next changes are detected properly
-      previousItemRef.current = { ...item };
-    }
-  }, [item.current_price, item.desired_price, item.id]);
-
-  // CRITICAL FIX: Pre-calculate values instead of recalculating on every render
-  const formattedCurrentPrice = formatPrice(item.current_price);
-  const formattedDesiredPrice = formatPrice(item.desired_price);
-  const discount = calculateDiscount(item.current_price, item.desired_price);
-  const isPriceReached = item.current_price <= item.desired_price && item.current_price > 0;
-
-  // Format price function
-  function formatPrice(price) {
+  const formatPrice = (price) => {
     return new Intl.NumberFormat('ru-RU', {
       style: 'currency',
       currency: 'RUB',
       minimumFractionDigits: 0
     }).format(price);
-  }
+  };
 
-  // Calculate discount function
-  function calculateDiscount(currentPrice, desiredPrice) {
-    if (currentPrice <= 0) return 0;
-    return Math.round(100 - (desiredPrice / currentPrice * 100));
-  }
-
-  // Update DOM elements when position changes
-  useEffect(() => {
-    if (cardRef.current) {
-      cardRef.current.style.transform = `translateX(${position}px)`;
-    }
-    
-    if (deleteBtnRef.current) {
-      const progress = Math.min(1, Math.abs(position) / DELETE_BTN_WIDTH);
-      deleteBtnRef.current.style.opacity = `${0.5 + progress * 0.5}`;
-    }
-  }, [position]);
+  const currentPrice = formatPrice(item.current_price);
+  const desiredPrice = formatPrice(item.desired_price);
+  const discount = item.current_price > 0 
+    ? Math.round(100 - (item.desired_price / item.current_price * 100))
+    : 0;
+  const isPriceReached = item.current_price <= item.desired_price;
 
   const handleStart = (clientX) => {
     startPos.current = clientX;
     setIsDragging(true);
-    if (cardRef.current) {
-      cardRef.current.style.transition = 'none';
-    }
+    cardRef.current.style.transition = 'none';
   };
 
   const handleMove = (clientX) => {
@@ -86,15 +48,15 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
     
     newPosition = Math.min(0, Math.max(-MAX_SWIPE, newPosition));
     setPosition(newPosition);
+    
+    const progress = Math.min(1, Math.abs(newPosition) / DELETE_BTN_WIDTH);
+    deleteBtnRef.current.style.opacity = `${0.5 + progress * 0.5}`;
   };
 
   const handleEnd = () => {
     if (!isDragging) return;
     setIsDragging(false);
-    
-    if (cardRef.current) {
-      cardRef.current.style.transition = 'transform 0.2s ease-out';
-    }
+    cardRef.current.style.transition = 'transform 0.2s ease-out';
     
     if (position <= -DELETE_BTN_WIDTH) {
       if (window.confirm('Удалить товар из отслеживания?')) {
@@ -111,9 +73,7 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
 
   const resetPosition = () => {
     setPosition(0);
-    if (deleteBtnRef.current) {
-      deleteBtnRef.current.style.opacity = '1';
-    }
+    deleteBtnRef.current.style.opacity = '1';
   };
 
   const handleDeleteClick = (e) => {
@@ -141,10 +101,7 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
   useEffect(() => {
     const handleMouseMove = (e) => handleMove(e.clientX);
     const handleTouchMove = (e) => {
-      // Prevent scrolling only on significant movement
-      if (Math.abs(e.touches[0].clientX - startPos.current) > 10) {
-        e.preventDefault();
-      }
+      e.preventDefault();
       handleMove(e.touches[0].clientX);
     };
     const handleEndEvent = () => handleEnd();
@@ -162,19 +119,10 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleEndEvent);
     };
-  }, [isDragging]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      setPosition(0);
-      setIsDragging(false);
-    };
-  }, []);
+  }, [isDragging, position]);
 
   return (
     <div className="relative mb-3 overflow-hidden rounded-lg bg-white shadow-sm">
-      {/* Delete button */}
       <div
         ref={deleteBtnRef}
         className="absolute top-0 right-0 h-full w-20 bg-red-500 flex items-center justify-center text-white"
@@ -188,7 +136,6 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
         </div>
       </div>
 
-      {/* Item card */}
       <div
         ref={cardRef}
         className={`relative z-10 bg-white rounded-lg border ${
@@ -209,10 +156,13 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
           <div className="flex gap-3">
             <div className="w-16 h-16 flex-shrink-0 rounded-lg border border-gray-200 overflow-hidden bg-white">
               <img
-                src={imgError ? 'https://via.placeholder.com/80?text=WB' : item.image}
+                src={item.image}
                 alt={item.title}
                 className="w-full h-full object-contain"
-                onError={() => setImgError(true)}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = 'https://via.placeholder.com/80?text=WB';
+                }}
               />
             </div>
 
@@ -224,10 +174,10 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
                 <span className={`px-1.5 py-0.5 rounded-lg font-medium ${
                   isPriceReached ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'
                 }`}>
-                  {formattedCurrentPrice}
+                  {currentPrice}
                 </span>
                 <span className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded-lg font-medium">
-                  Ждем: {formattedDesiredPrice}
+                  Ждем: {desiredPrice}
                 </span>
                 <span className="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-lg font-medium">
                   -{discount}%
@@ -258,26 +208,4 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
   );
 };
 
-// CRITICAL FIX: Properly implement memo to prevent unnecessary re-renders
-export default memo(ItemCard, (prevProps, nextProps) => {
-  // Return true if component should NOT re-render
-  
-  // Only re-render if:
-  // 1. Item ID changes
-  // 2. Current or desired price changes
-  // 3. Expanded state changes for this specific item
-  
-  const priceUnchanged = 
-    prevProps.item.current_price === nextProps.item.current_price &&
-    prevProps.item.desired_price === nextProps.item.desired_price;
-    
-  const idUnchanged = prevProps.item.id === nextProps.item.id;
-  
-  // Handle expansion state: only care about expansion changes relevant to this item
-  const wasExpanded = prevProps.expandedItemId === prevProps.item.id;
-  const isExpanded = nextProps.expandedItemId === nextProps.item.id;
-  const expansionUnchanged = wasExpanded === isExpanded;
-  
-  // Don't re-render if everything important is unchanged
-  return idUnchanged && priceUnchanged && expansionUnchanged;
-});
+export default ItemCard;
