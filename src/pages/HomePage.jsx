@@ -2,134 +2,134 @@ import React, { useState, useEffect } from 'react';
 import { getUserItems, deleteItem } from '../services/api';
 import { useApp } from '../contexts/AppContext';
 import Layout from '../components/Layout';
-import ItemCard from '../components/ItemCard';
 import AddItemForm from '../components/AddItemForm';
-import SubscriptionBanner from '../components/SubscriptionBanner';
-import Loading from '../components/Loading';
+import ItemCard from '../components/ItemCard';
 import ErrorMessage from '../components/ErrorMessage';
+import SubscriptionBanner from '../components/SubscriptionBanner';
+import useDataPolling from '../hooks/useDataPolling';
 
 const HomePage = () => {
   const { user } = useApp();
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [refreshKey, setRefreshKey] = useState(0);
   const [expandedItemId, setExpandedItemId] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Загрузка товаров пользователя
-  useEffect(() => {
-    const fetchItems = async () => {
-      if (!user) return;
+  // Use the data polling hook for items
+  const {
+    data: items,
+    loading: itemsLoading,
+    error: itemsError,
+    refetch: refetchItems,
+    isRefreshing
+  } = useDataPolling(
+    () => getUserItems(user?.telegram_id),
+    60000, // Poll every minute
+    [user?.telegram_id, refreshTrigger],
+    !!user?.telegram_id // Only enable polling when user is logged in
+  );
 
-      try {
-        setLoading(true);
-        const response = await getUserItems(user.telegram_id);
-        
-        if (response.success) {
-          setItems(response.items || []);
-          setError('');
-        } else {
-          setError(response.error || 'Не удалось загрузить товары');
-        }
-      } catch (err) {
-        setError('Произошла ошибка при загрузке товаров');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchItems();
-  }, [user, refreshKey]);
-
-  // Обработчик добавления товара
+  // Handle item added event
   const handleItemAdded = (newItem) => {
-    setItems((prevItems) => [...prevItems, newItem]);
+    refetchItems(); // Refetch the items list to include the new item
   };
 
-  // Обработчик удаления товара
+  // Handle delete item
   const handleDeleteItem = async (itemId) => {
     try {
-      const response = await deleteItem(itemId, user.telegram_id);
+      const result = await deleteItem(itemId, user.telegram_id);
       
-      if (response.success) {
-        setItems((prevItems) => prevItems.filter(item => item.id !== itemId));
-        if (expandedItemId === itemId) {
-          setExpandedItemId(null);
-        }
-      } else {
-        alert(response.error || 'Не удалось удалить товар');
+      if (result.success) {
+        // Refresh items list
+        setRefreshTrigger(prev => prev + 1);
       }
-    } catch (err) {
-      alert('Произошла ошибка при удалении товара');
-      console.error(err);
+    } catch (error) {
+      console.error('Error deleting item:', error);
     }
   };
 
-  // Функция для повторной загрузки в случае ошибки
-  const handleRetry = () => {
-    setRefreshKey(prev => prev + 1);
-  };
+  // Display loading state
+  if (itemsLoading && !items) {
+    return (
+      <Layout>
+        <div className="flex flex-col items-center justify-center p-6">
+          <div className="w-12 h-12 border-t-2 border-b-2 border-purple-800 rounded-full animate-spin mb-4"></div>
+          <p className="text-gray-600">Загружаем ваши товары...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Display error state
+  if (itemsError) {
+    return (
+      <Layout>
+        <ErrorMessage 
+          message="Не удалось загрузить товары. Пожалуйста, попробуйте позже." 
+          onRetry={refetchItems}
+        />
+      </Layout>
+    );
+  }
+
+  // Check if items data is properly loaded
+  const itemsList = items?.items || [];
 
   return (
     <Layout>
-      <header className="mb-6">
-        <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-          Отслеживание цен Wildberries
-        </h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Добавляйте товары и получайте уведомления о снижении цены
+      {/* App Description */}
+      <div className="bg-white rounded-xl p-5 shadow-md border border-gray-100 mb-6">
+        <h1 className="text-lg font-semibold text-purple-900 mb-2">Трекер цен WB</h1>
+        <p className="text-gray-600 text-sm">
+          Отслеживайте изменения цен на товары Wildberries и получайте уведомления о снижении цен.
         </p>
-      </header>
-      
+      </div>
+
+      {/* Subscription Banner */}
       <SubscriptionBanner />
-      
+
+      {/* Add Item Form */}
       <AddItemForm onItemAdded={handleItemAdded} />
-      
-      {error ? (
-        <ErrorMessage message={error} onRetry={handleRetry} />
-      ) : loading ? (
-        <div className="py-8 flex justify-center">
-          <div className="w-10 h-10 border-2 border-purple-800 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      ) : (
-        <div className="mt-2 mb-20">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">
-              Ваши товары
-            </h2>
-            <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
-              Всего: {items.length}
-            </span>
-          </div>
+
+      {/* Items List */}
+      <div className="mt-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Отслеживаемые товары 
+            <span className="ml-2 text-sm text-gray-500">({itemsList.length})</span>
+          </h2>
           
-          {items.length === 0 ? (
-            <div className="text-center py-10 bg-white rounded-xl border border-dashed border-gray-200 shadow-sm">
-              <svg className="w-14 h-14 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+          {isRefreshing && (
+            <span className="text-xs text-gray-500 flex items-center">
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <p className="text-gray-600 font-medium">
-                У вас пока нет товаров для отслеживания
-              </p>
-              <p className="text-gray-500 text-sm mt-1">
-                Добавьте товар с помощью кнопки выше
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {items.map((item) => (
-                <ItemCard 
-                  key={item.id} 
-                  item={item} 
-                  onDelete={handleDeleteItem}
-                  expandedItemId={expandedItemId}
-                  setExpandedItemId={setExpandedItemId}
-                />
-              ))}
-            </div>
+              Обновление...
+            </span>
           )}
         </div>
-      )}
+
+        {itemsList.length === 0 ? (
+          <div className="bg-gray-50 rounded-xl p-8 text-center border border-gray-200">
+            <svg className="w-14 h-14 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            <p className="text-gray-500 mb-2">У вас пока нет отслеживаемых товаров</p>
+            <p className="text-sm text-gray-400">Добавьте товар для отслеживания с помощью формы выше</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {itemsList.map(item => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                onDelete={handleDeleteItem}
+                expandedItemId={expandedItemId}
+                setExpandedItemId={setExpandedItemId}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </Layout>
   );
 };
