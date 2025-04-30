@@ -117,7 +117,8 @@ const HomePage = () => {
             <p className="text-sm text-gray-400">Добавьте товар для отслеживания с помощью формы выше</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 pb-24">
+            {/* Added pb-24 here to ensure adequate bottom padding */}
             {itemsList.map(item => (
               <ItemCard
                 key={item.id}
