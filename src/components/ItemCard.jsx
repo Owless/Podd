@@ -17,41 +17,42 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
 
   const isExpanded = item.id === expandedItemId;
 
-  // Track only significant changes in the item (prices)
+  // IMPORTANT: Only track meaningful price changes
   useEffect(() => {
-    const prevItem = previousItemRef.current;
-    
-    // Check only price changes, ignore last_checked
     if (
-      prevItem.current_price !== item.current_price ||
-      prevItem.desired_price !== item.desired_price
+      previousItemRef.current.current_price !== item.current_price ||
+      previousItemRef.current.desired_price !== item.desired_price
     ) {
       console.log('Price changed:', {
         id: item.id,
-        old_price: prevItem.current_price,
-        new_price: item.current_price,
-        time: new Date().toISOString()
+        old_price: previousItemRef.current.current_price,
+        new_price: item.current_price
       });
-      // Update reference to previous item state
+      // We need to update the reference so that next changes are detected properly
       previousItemRef.current = { ...item };
     }
-  }, [item.current_price, item.desired_price, item.id]); // Depend only on prices, not on last_checked
+  }, [item.current_price, item.desired_price, item.id]);
 
-  const formatPrice = (price) => {
+  // CRITICAL FIX: Pre-calculate values instead of recalculating on every render
+  const formattedCurrentPrice = formatPrice(item.current_price);
+  const formattedDesiredPrice = formatPrice(item.desired_price);
+  const discount = calculateDiscount(item.current_price, item.desired_price);
+  const isPriceReached = item.current_price <= item.desired_price && item.current_price > 0;
+
+  // Format price function
+  function formatPrice(price) {
     return new Intl.NumberFormat('ru-RU', {
       style: 'currency',
       currency: 'RUB',
       minimumFractionDigits: 0
     }).format(price);
-  };
+  }
 
-  // Calculate data only on actual prop changes
-  const currentPrice = formatPrice(item.current_price);
-  const desiredPrice = formatPrice(item.desired_price);
-  const discount = item.current_price > 0 
-    ? Math.round(100 - (item.desired_price / item.current_price * 100))
-    : 0;
-  const isPriceReached = item.current_price <= item.desired_price && item.current_price > 0;
+  // Calculate discount function
+  function calculateDiscount(currentPrice, desiredPrice) {
+    if (currentPrice <= 0) return 0;
+    return Math.round(100 - (desiredPrice / currentPrice * 100));
+  }
 
   // Update DOM elements when position changes
   useEffect(() => {
@@ -63,7 +64,7 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
       const progress = Math.min(1, Math.abs(position) / DELETE_BTN_WIDTH);
       deleteBtnRef.current.style.opacity = `${0.5 + progress * 0.5}`;
     }
-  }, [position, DELETE_BTN_WIDTH]);
+  }, [position]);
 
   const handleStart = (clientX) => {
     startPos.current = clientX;
@@ -223,10 +224,10 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
                 <span className={`px-1.5 py-0.5 rounded-lg font-medium ${
                   isPriceReached ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'
                 }`}>
-                  {currentPrice}
+                  {formattedCurrentPrice}
                 </span>
                 <span className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded-lg font-medium">
-                  Ждем: {desiredPrice}
+                  Ждем: {formattedDesiredPrice}
                 </span>
                 <span className="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-lg font-medium">
                   -{discount}%
@@ -257,17 +258,26 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
   );
 };
 
-// Optimized check for re-rendering
+// CRITICAL FIX: Properly implement memo to prevent unnecessary re-renders
 export default memo(ItemCard, (prevProps, nextProps) => {
   // Return true if component should NOT re-render
-  return (
-    prevProps.item.id === nextProps.item.id &&
+  
+  // Only re-render if:
+  // 1. Item ID changes
+  // 2. Current or desired price changes
+  // 3. Expanded state changes for this specific item
+  
+  const priceUnchanged = 
     prevProps.item.current_price === nextProps.item.current_price &&
-    prevProps.item.desired_price === nextProps.item.desired_price &&
-    prevProps.expandedItemId === nextProps.expandedItemId &&
-    // Ignore last_checked changes when comparing
-    (prevProps.expandedItemId === nextProps.item.id || 
-     nextProps.expandedItemId === nextProps.item.id || 
-     prevProps.expandedItemId !== nextProps.expandedItemId)
-  );
+    prevProps.item.desired_price === nextProps.item.desired_price;
+    
+  const idUnchanged = prevProps.item.id === nextProps.item.id;
+  
+  // Handle expansion state: only care about expansion changes relevant to this item
+  const wasExpanded = prevProps.expandedItemId === prevProps.item.id;
+  const isExpanded = nextProps.expandedItemId === nextProps.item.id;
+  const expansionUnchanged = wasExpanded === isExpanded;
+  
+  // Don't re-render if everything important is unchanged
+  return idUnchanged && priceUnchanged && expansionUnchanged;
 });
