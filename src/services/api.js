@@ -9,20 +9,20 @@ const api = axios.create({
   },
 });
 
-// Инициализация пользователя
+// User initialization
 export const initUser = async (userData) => {
   try {
-    // Формируем тело запроса
+    // Create request payload
     const payload = {
       ...userData,
       referral_code: userData.referral_code || null,
       start_param: userData.start_param || window.Telegram?.WebApp?.startParam || null
     };
 
-    // Логируем тело запроса ПЕРЕД отправкой
+    // Log payload BEFORE sending
     console.log('Sending payload to /api/user/init:', JSON.stringify(payload, null, 2));
 
-    // Отправляем запрос
+    // Send request
     const response = await api.post('/api/user/init', payload);
     return response.data;
   } catch (error) {
@@ -34,7 +34,7 @@ export const initUser = async (userData) => {
   }
 };
 
-// Получение списка товаров пользователя - без троттлинга
+// Get user items without throttling
 export const getUserItems = async (telegramId) => {
   try {
     const response = await api.get(`/api/items/list?telegram_id=${telegramId}`);
@@ -48,7 +48,7 @@ export const getUserItems = async (telegramId) => {
   }
 };
 
-// Добавление товара
+// Add item
 export const addItem = async (data) => {
   try {
     const response = await api.post('/api/items/add', data);
@@ -62,7 +62,7 @@ export const addItem = async (data) => {
   }
 };
 
-// Удаление товара
+// Delete item
 export const deleteItem = async (itemId, telegramId) => {
   try {
     const response = await api.delete(`/api/items/delete/${itemId}?telegram_id=${telegramId}`);
@@ -76,7 +76,7 @@ export const deleteItem = async (itemId, telegramId) => {
   }
 };
 
-// Обновление товара (обновление целевой цены)
+// Update item (update target price)
 export const updateItem = async (itemId, data) => {
   try {
     const response = await api.put(`/api/items/update/${itemId}`, data);
@@ -90,7 +90,7 @@ export const updateItem = async (itemId, data) => {
   }
 };
 
-// Получение информации о товаре по артикулу
+// Get product info by article ID
 export const getProductInfo = async (articleId) => {
   try {
     const response = await api.get(`/api/wb/product-info?article_id=${articleId}`);
@@ -104,7 +104,7 @@ export const getProductInfo = async (articleId) => {
   }
 };
 
-// Получение информации о пользователе
+// Get user info
 export const getUserInfo = async (telegramId) => {
   try {
     const response = await api.get(`/api/user/info?telegram_id=${telegramId}`);
@@ -118,7 +118,7 @@ export const getUserInfo = async (telegramId) => {
   }
 };
 
-// Получить планы подписки
+// Get subscription plans
 export const getSubscriptionPlans = async () => {
   try {
     const response = await api.get('/api/subscription/plans');
@@ -132,7 +132,7 @@ export const getSubscriptionPlans = async () => {
   }
 };
 
-// Создать подписку
+// Create subscription
 export const createSubscription = async (data) => {
   try {
     const response = await api.post('/api/subscription/create', data);
@@ -146,7 +146,7 @@ export const createSubscription = async (data) => {
   }
 };
 
-// Проверить статус подписки
+// Check subscription status
 export const checkSubscription = async (data) => {
   try {
     const response = await api.post('/api/subscription/check', data);
@@ -160,7 +160,7 @@ export const checkSubscription = async (data) => {
   }
 };
 
-// Получение информации о реферальной программе пользователя
+// Get referral info
 export const getReferralInfo = async (telegramId) => {
   try {
     const response = await api.get(`/api/user/referrals?telegram_id=${telegramId}`);
@@ -174,7 +174,7 @@ export const getReferralInfo = async (telegramId) => {
   }
 };
 
-// Обработка подписки (включая начисление реферальных бонусов)
+// Process subscription (including referral bonuses)
 export const processSubscription = async (data) => {
   try {
     const response = await api.post('/api/subscription/process', data);
@@ -188,7 +188,7 @@ export const processSubscription = async (data) => {
   }
 };
 
-// Создание реферальной ссылки
+// Create referral link
 export const createReferralLink = async (telegramId) => {
   try {
     const response = await api.post('/api/user/create-referral-link', { telegram_id: telegramId });
@@ -202,7 +202,7 @@ export const createReferralLink = async (telegramId) => {
   }
 };
 
-// Применение реферального кода
+// Apply referral code
 export const applyReferralCode = async (telegramId, referralCode) => {
   try {
     const response = await api.post('/api/user/apply-referral', { 
@@ -219,7 +219,7 @@ export const applyReferralCode = async (telegramId, referralCode) => {
   }
 };
 
-// Получение статистики по рефералам
+// Get referral statistics
 export const getReferralStats = async (telegramId) => {
   try {
     const response = await api.get(`/api/user/referral-stats?telegram_id=${telegramId}`);
