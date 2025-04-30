@@ -17,11 +17,11 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
 
   const isExpanded = item.id === expandedItemId;
 
-  // Отслеживаем только значимые изменения в товаре (цены)
+  // Track only significant changes in the item (prices)
   useEffect(() => {
     const prevItem = previousItemRef.current;
     
-    // Проверяем только изменения цен, игнорируем last_checked
+    // Check only price changes, ignore last_checked
     if (
       prevItem.current_price !== item.current_price ||
       prevItem.desired_price !== item.desired_price
@@ -32,10 +32,10 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
         new_price: item.current_price,
         time: new Date().toISOString()
       });
-      // Обновляем ссылку на предыдущее состояние элемента
+      // Update reference to previous item state
       previousItemRef.current = { ...item };
     }
-  }, [item.current_price, item.desired_price, item.id]); // Зависим только от цен, не от last_checked
+  }, [item.current_price, item.desired_price, item.id]); // Depend only on prices, not on last_checked
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('ru-RU', {
@@ -45,7 +45,7 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
     }).format(price);
   };
 
-  // Вычисляем данные только при реальных изменениях в пропсах
+  // Calculate data only on actual prop changes
   const currentPrice = formatPrice(item.current_price);
   const desiredPrice = formatPrice(item.desired_price);
   const discount = item.current_price > 0 
@@ -53,7 +53,7 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
     : 0;
   const isPriceReached = item.current_price <= item.desired_price && item.current_price > 0;
 
-  // Обновление DOM-элементов при изменении position
+  // Update DOM elements when position changes
   useEffect(() => {
     if (cardRef.current) {
       cardRef.current.style.transform = `translateX(${position}px)`;
@@ -140,7 +140,7 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
   useEffect(() => {
     const handleMouseMove = (e) => handleMove(e.clientX);
     const handleTouchMove = (e) => {
-      // Предотвращаем прокрутку только при существенном перемещении
+      // Prevent scrolling only on significant movement
       if (Math.abs(e.touches[0].clientX - startPos.current) > 10) {
         e.preventDefault();
       }
@@ -163,7 +163,7 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
     };
   }, [isDragging]);
 
-  // Очистка при размонтировании
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       setPosition(0);
@@ -173,7 +173,7 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
 
   return (
     <div className="relative mb-3 overflow-hidden rounded-lg bg-white shadow-sm">
-      {/* Кнопка удаления */}
+      {/* Delete button */}
       <div
         ref={deleteBtnRef}
         className="absolute top-0 right-0 h-full w-20 bg-red-500 flex items-center justify-center text-white"
@@ -187,7 +187,7 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
         </div>
       </div>
 
-      {/* Карточка товара */}
+      {/* Item card */}
       <div
         ref={cardRef}
         className={`relative z-10 bg-white rounded-lg border ${
@@ -257,15 +257,15 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
   );
 };
 
-// Оптимизированная проверка необходимости перерендеринга
+// Optimized check for re-rendering
 export default memo(ItemCard, (prevProps, nextProps) => {
-  // Возвращаем true, если компонент НЕ должен рендериться заново
+  // Return true if component should NOT re-render
   return (
     prevProps.item.id === nextProps.item.id &&
     prevProps.item.current_price === nextProps.item.current_price &&
     prevProps.item.desired_price === nextProps.item.desired_price &&
     prevProps.expandedItemId === nextProps.expandedItemId &&
-    // Игнорируем изменения last_checked при сравнении
+    // Ignore last_checked changes when comparing
     (prevProps.expandedItemId === nextProps.item.id || 
      nextProps.expandedItemId === nextProps.item.id || 
      prevProps.expandedItemId !== nextProps.expandedItemId)
