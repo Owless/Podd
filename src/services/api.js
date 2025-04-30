@@ -11,6 +11,7 @@ const api = axios.create({
 
 // Переменные для контроля частоты запросов
 let lastItemsFetch = 0;
+let isFirstFetch = true; // Флаг для первого запроса
 const FETCH_COOLDOWN = 30000; // 30 секунд между запросами на получение списка товаров
 
 // Инициализация пользователя
@@ -41,11 +42,12 @@ export const initUser = async (userData) => {
 // Получение списка товаров пользователя
 export const getUserItems = async (telegramId) => {
   try {
-    // Проверка, не слишком ли часто делаем запросы
     const now = Date.now();
-    if (now - lastItemsFetch < FETCH_COOLDOWN) {
+    
+    // Пропускаем проверку throttling для первого запроса
+    if (!isFirstFetch && now - lastItemsFetch < FETCH_COOLDOWN) {
       console.log(`Throttling API request - last request was ${(now - lastItemsFetch)/1000}s ago`);
-      // Возвращаем специальный объект, говорящий что запрос был пропущен из-за троттлинга
+      // Возвращаем последние данные с флагом throttled
       return { 
         success: true, 
         throttled: true,
@@ -56,6 +58,7 @@ export const getUserItems = async (telegramId) => {
     
     // Запоминаем время запроса
     lastItemsFetch = now;
+    isFirstFetch = false;
     
     console.log('Fetching items from API:', new Date().toISOString());
     const response = await api.get(`/api/items/list?telegram_id=${telegramId}`);
