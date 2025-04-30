@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 
 const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
   const [position, setPosition] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const startPos = useRef(0);
   const cardRef = useRef(null);
   const deleteBtnRef = useRef(null);
@@ -23,17 +24,20 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
     }).format(price);
   };
 
+  // Pre-calculate these values to avoid recalculating on every render
   const currentPrice = formatPrice(item.current_price);
   const desiredPrice = formatPrice(item.desired_price);
   const discount = item.current_price > 0 
     ? Math.round(100 - (item.desired_price / item.current_price * 100))
     : 0;
-  const isPriceReached = item.current_price <= item.desired_price;
+  const isPriceReached = item.current_price <= item.desired_price && item.current_price > 0;
 
   const handleStart = (clientX) => {
     startPos.current = clientX;
     setIsDragging(true);
-    cardRef.current.style.transition = 'none';
+    if (cardRef.current) {
+      cardRef.current.style.transition = 'none';
+    }
   };
 
   const handleMove = (clientX) => {
@@ -49,14 +53,19 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
     newPosition = Math.min(0, Math.max(-MAX_SWIPE, newPosition));
     setPosition(newPosition);
     
-    const progress = Math.min(1, Math.abs(newPosition) / DELETE_BTN_WIDTH);
-    deleteBtnRef.current.style.opacity = `${0.5 + progress * 0.5}`;
+    if (deleteBtnRef.current) {
+      const progress = Math.min(1, Math.abs(newPosition) / DELETE_BTN_WIDTH);
+      deleteBtnRef.current.style.opacity = `${0.5 + progress * 0.5}`;
+    }
   };
 
   const handleEnd = () => {
     if (!isDragging) return;
     setIsDragging(false);
-    cardRef.current.style.transition = 'transform 0.2s ease-out';
+    
+    if (cardRef.current) {
+      cardRef.current.style.transition = 'transform 0.2s ease-out';
+    }
     
     if (position <= -DELETE_BTN_WIDTH) {
       if (window.confirm('Удалить товар из отслеживания?')) {
@@ -73,7 +82,9 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
 
   const resetPosition = () => {
     setPosition(0);
-    deleteBtnRef.current.style.opacity = '1';
+    if (deleteBtnRef.current) {
+      deleteBtnRef.current.style.opacity = '1';
+    }
   };
 
   const handleDeleteClick = (e) => {
@@ -98,10 +109,20 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
     }
   };
 
+  // Update card position when the position state changes
+  useEffect(() => {
+    if (cardRef.current) {
+      cardRef.current.style.transform = `translateX(${position}px)`;
+    }
+  }, [position]);
+
   useEffect(() => {
     const handleMouseMove = (e) => handleMove(e.clientX);
     const handleTouchMove = (e) => {
-      e.preventDefault();
+      // Prevent scrolling only on significant movement
+      if (Math.abs(e.touches[0].clientX - startPos.current) > 10) {
+        e.preventDefault();
+      }
       handleMove(e.touches[0].clientX);
     };
     const handleEndEvent = () => handleEnd();
@@ -119,7 +140,7 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleEndEvent);
     };
-  }, [isDragging, position]);
+  }, [isDragging]); // Remove position from dependencies
 
   return (
     <div className="relative mb-3 overflow-hidden rounded-lg bg-white shadow-sm">
@@ -156,13 +177,10 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
           <div className="flex gap-3">
             <div className="w-16 h-16 flex-shrink-0 rounded-lg border border-gray-200 overflow-hidden bg-white">
               <img
-                src={item.image}
+                src={imgError ? 'https://via.placeholder.com/80?text=WB' : item.image}
                 alt={item.title}
                 className="w-full h-full object-contain"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = 'https://via.placeholder.com/80?text=WB';
-                }}
+                onError={() => setImgError(true)}
               />
             </div>
 
@@ -208,4 +226,12 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
   );
 };
 
-export default ItemCard;
+export default memo(ItemCard, (prevProps, nextProps) => {
+  // Return true if component should NOT re-render
+  return (
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.item.current_price === nextProps.item.current_price &&
+    prevProps.item.desired_price === nextProps.item.desired_price &&
+    prevProps.expandedItemId === nextProps.expandedItemId
+  );
+});
