@@ -17,26 +17,25 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
 
   const isExpanded = item.id === expandedItemId;
 
-  // Debugging - отслеживаем значимые изменения в товаре
-useEffect(() => {
-  const prevItem = previousItemRef.current;
-  // Отслеживаем только реальные изменения цен
-  if (
-    prevItem.current_price !== item.current_price ||
-    prevItem.desired_price !== item.desired_price
-  ) {
-    console.log('Price changed:', {
-      id: item.id,
-      old_price: prevItem.current_price,
-      new_price: item.current_price,
-      time: new Date().toISOString()
-    });
-    previousItemRef.current = { ...item };
-  } else if (prevItem.last_checked !== item.last_checked) {
-    // Тихо обновляем ссылку без вывода в консоль
-    previousItemRef.current = { ...item };
-  }
-}, [item]);
+  // Отслеживаем только значимые изменения в товаре (цены)
+  useEffect(() => {
+    const prevItem = previousItemRef.current;
+    
+    // Проверяем только изменения цен, игнорируем last_checked
+    if (
+      prevItem.current_price !== item.current_price ||
+      prevItem.desired_price !== item.desired_price
+    ) {
+      console.log('Price changed:', {
+        id: item.id,
+        old_price: prevItem.current_price,
+        new_price: item.current_price,
+        time: new Date().toISOString()
+      });
+      // Обновляем ссылку на предыдущее состояние элемента
+      previousItemRef.current = { ...item };
+    }
+  }, [item.current_price, item.desired_price, item.id]); // Зависим только от цен, не от last_checked
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('ru-RU', {
@@ -258,14 +257,17 @@ useEffect(() => {
   );
 };
 
-// Мемоизация компонента для предотвращения ненужных ререндеров
+// Оптимизированная проверка необходимости перерендеринга
 export default memo(ItemCard, (prevProps, nextProps) => {
   // Возвращаем true, если компонент НЕ должен рендериться заново
   return (
     prevProps.item.id === nextProps.item.id &&
     prevProps.item.current_price === nextProps.item.current_price &&
     prevProps.item.desired_price === nextProps.item.desired_price &&
-    prevProps.item.last_checked === nextProps.item.last_checked &&
-    prevProps.expandedItemId === nextProps.expandedItemId
+    prevProps.expandedItemId === nextProps.expandedItemId &&
+    // Игнорируем изменения last_checked при сравнении
+    (prevProps.expandedItemId === nextProps.item.id || 
+     nextProps.expandedItemId === nextProps.item.id || 
+     prevProps.expandedItemId !== nextProps.expandedItemId)
   );
 });
