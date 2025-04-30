@@ -1,11 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 
 const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
   const [position, setPosition] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const startPos = useRef(0);
   const cardRef = useRef(null);
   const deleteBtnRef = useRef(null);
+  const previousItemRef = useRef(item);
 
   // Increase delete button width
   const DELETE_BTN_WIDTH = 80;
@@ -15,6 +17,25 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
 
   const isExpanded = item.id === expandedItemId;
 
+  // Debugging - отслеживаем значимые изменения в товаре
+  useEffect(() => {
+    const prevItem = previousItemRef.current;
+    if (
+      prevItem.current_price !== item.current_price ||
+      prevItem.desired_price !== item.desired_price ||
+      prevItem.last_checked !== item.last_checked
+    ) {
+      console.log('Item updated:', {
+        id: item.id,
+        old_price: prevItem.current_price,
+        new_price: item.current_price,
+        last_checked: new Date(item.last_checked).toISOString(),
+        time: new Date().toISOString()
+      });
+      previousItemRef.current = { ...item };
+    }
+  }, [item]);
+
   const formatPrice = (price) => {
     return new Intl.NumberFormat('ru-RU', {
       style: 'currency',
@@ -23,17 +44,32 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
     }).format(price);
   };
 
+  // Вычисляем данные только при реальных изменениях в пропсах
   const currentPrice = formatPrice(item.current_price);
   const desiredPrice = formatPrice(item.desired_price);
   const discount = item.current_price > 0 
     ? Math.round(100 - (item.desired_price / item.current_price * 100))
     : 0;
-  const isPriceReached = item.current_price <= item.desired_price;
+  const isPriceReached = item.current_price <= item.desired_price && item.current_price > 0;
+
+  // Обновление DOM-элементов при изменении position
+  useEffect(() => {
+    if (cardRef.current) {
+      cardRef.current.style.transform = `translateX(${position}px)`;
+    }
+    
+    if (deleteBtnRef.current) {
+      const progress = Math.min(1, Math.abs(position) / DELETE_BTN_WIDTH);
+      deleteBtnRef.current.style.opacity = `${0.5 + progress * 0.5}`;
+    }
+  }, [position, DELETE_BTN_WIDTH]);
 
   const handleStart = (clientX) => {
     startPos.current = clientX;
     setIsDragging(true);
-    cardRef.current.style.transition = 'none';
+    if (cardRef.current) {
+      cardRef.current.style.transition = 'none';
+    }
   };
 
   const handleMove = (clientX) => {
@@ -48,15 +84,15 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
     
     newPosition = Math.min(0, Math.max(-MAX_SWIPE, newPosition));
     setPosition(newPosition);
-    
-    const progress = Math.min(1, Math.abs(newPosition) / DELETE_BTN_WIDTH);
-    deleteBtnRef.current.style.opacity = `${0.5 + progress * 0.5}`;
   };
 
   const handleEnd = () => {
     if (!isDragging) return;
     setIsDragging(false);
-    cardRef.current.style.transition = 'transform 0.2s ease-out';
+    
+    if (cardRef.current) {
+      cardRef.current.style.transition = 'transform 0.2s ease-out';
+    }
     
     if (position <= -DELETE_BTN_WIDTH) {
       if (window.confirm('Удалить товар из отслеживания?')) {
@@ -73,7 +109,9 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
 
   const resetPosition = () => {
     setPosition(0);
-    deleteBtnRef.current.style.opacity = '1';
+    if (deleteBtnRef.current) {
+      deleteBtnRef.current.style.opacity = '1';
+    }
   };
 
   const handleDeleteClick = (e) => {
@@ -101,7 +139,10 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
   useEffect(() => {
     const handleMouseMove = (e) => handleMove(e.clientX);
     const handleTouchMove = (e) => {
-      e.preventDefault();
+      // Предотвращаем прокрутку только при существенном перемещении
+      if (Math.abs(e.touches[0].clientX - startPos.current) > 10) {
+        e.preventDefault();
+      }
       handleMove(e.touches[0].clientX);
     };
     const handleEndEvent = () => handleEnd();
@@ -119,10 +160,19 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleEndEvent);
     };
-  }, [isDragging, position]);
+  }, [isDragging]);
+
+  // Очистка при размонтировании
+  useEffect(() => {
+    return () => {
+      setPosition(0);
+      setIsDragging(false);
+    };
+  }, []);
 
   return (
     <div className="relative mb-3 overflow-hidden rounded-lg bg-white shadow-sm">
+      {/* Кнопка удаления */}
       <div
         ref={deleteBtnRef}
         className="absolute top-0 right-0 h-full w-20 bg-red-500 flex items-center justify-center text-white"
@@ -136,6 +186,7 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
         </div>
       </div>
 
+      {/* Карточка товара */}
       <div
         ref={cardRef}
         className={`relative z-10 bg-white rounded-lg border ${
@@ -156,13 +207,10 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
           <div className="flex gap-3">
             <div className="w-16 h-16 flex-shrink-0 rounded-lg border border-gray-200 overflow-hidden bg-white">
               <img
-                src={item.image}
+                src={imgError ? 'https://via.placeholder.com/80?text=WB' : item.image}
                 alt={item.title}
                 className="w-full h-full object-contain"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = 'https://via.placeholder.com/80?text=WB';
-                }}
+                onError={() => setImgError(true)}
               />
             </div>
 
@@ -208,4 +256,14 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
   );
 };
 
-export default ItemCard;
+// Мемоизация компонента для предотвращения ненужных ререндеров
+export default memo(ItemCard, (prevProps, nextProps) => {
+  // Возвращаем true, если компонент НЕ должен рендериться заново
+  return (
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.item.current_price === nextProps.item.current_price &&
+    prevProps.item.desired_price === nextProps.item.desired_price &&
+    prevProps.item.last_checked === nextProps.item.last_checked &&
+    prevProps.expandedItemId === nextProps.expandedItemId
+  );
+});
