@@ -9,6 +9,10 @@ const api = axios.create({
   },
 });
 
+// Переменные для контроля частоты запросов
+let lastItemsFetch = 0;
+const FETCH_COOLDOWN = 30000; // 30 секунд между запросами на получение списка товаров
+
 // Инициализация пользователя
 export const initUser = async (userData) => {
   try {
@@ -37,6 +41,23 @@ export const initUser = async (userData) => {
 // Получение списка товаров пользователя
 export const getUserItems = async (telegramId) => {
   try {
+    // Проверка, не слишком ли часто делаем запросы
+    const now = Date.now();
+    if (now - lastItemsFetch < FETCH_COOLDOWN) {
+      console.log(`Throttling API request - last request was ${(now - lastItemsFetch)/1000}s ago`);
+      // Возвращаем специальный объект, говорящий что запрос был пропущен из-за троттлинга
+      return { 
+        success: true, 
+        throttled: true,
+        message: 'Request throttled to prevent excessive API calls',
+        timestamp: now 
+      };
+    }
+    
+    // Запоминаем время запроса
+    lastItemsFetch = now;
+    
+    console.log('Fetching items from API:', new Date().toISOString());
     const response = await api.get(`/api/items/list?telegram_id=${telegramId}`);
     return response.data;
   } catch (error) {
@@ -52,6 +73,13 @@ export const getUserItems = async (telegramId) => {
 export const addItem = async (data) => {
   try {
     const response = await api.post('/api/items/add', data);
+    
+    // После успешного добавления товара обновляем lastItemsFetch
+    // чтобы следующий запрос на получение списка прошел сразу
+    if (response.data.success) {
+      lastItemsFetch = 0;
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Error adding item:', error);
@@ -66,9 +94,36 @@ export const addItem = async (data) => {
 export const deleteItem = async (itemId, telegramId) => {
   try {
     const response = await api.delete(`/api/items/delete/${itemId}?telegram_id=${telegramId}`);
+    
+    // После успешного удаления товара обновляем lastItemsFetch
+    // чтобы следующий запрос на получение списка прошел сразу
+    if (response.data.success) {
+      lastItemsFetch = 0;
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Error deleting item:', error);
+    return {
+      success: false,
+      error: error.response?.data?.error || error.message,
+    };
+  }
+};
+
+// Обновление товара (обновление целевой цены)
+export const updateItem = async (itemId, data) => {
+  try {
+    const response = await api.put(`/api/items/update/${itemId}`, data);
+    
+    // После успешного обновления сбрасываем lastItemsFetch
+    if (response.data.success) {
+      lastItemsFetch = 0;
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error updating item:', error);
     return {
       success: false,
       error: error.response?.data?.error || error.message,
