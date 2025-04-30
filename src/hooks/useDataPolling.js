@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
- * Хук для периодического опроса данных с ограниченной частотой обновления
- * и проверкой на реальные изменения данных
+ * Hook for periodic data polling with limited update frequency
+ * and checking for real data changes
  * 
- * @param {Function} fetchFunction - Функция для получения данных
- * @param {number} pollingInterval - Интервал опроса в миллисекундах (по умолчанию 60000 мс = 60 секунд)
- * @param {Array} dependencies - Зависимости, при изменении которых нужно запустить опрос повторно
- * @param {boolean} enabled - Флаг, включающий или отключающий опрос
- * @returns {Object} - Объект с данными, состоянием загрузки и ошибкой
+ * @param {Function} fetchFunction - Function to fetch data
+ * @param {number} pollingInterval - Polling interval in milliseconds (default 60000 ms = 60 seconds)
+ * @param {Array} dependencies - Dependencies that should trigger re-polling when changed
+ * @param {boolean} enabled - Flag to enable or disable polling
+ * @returns {Object} - Object with data, loading state, and error
  */
 const useDataPolling = (
   fetchFunction,
@@ -22,39 +22,39 @@ const useDataPolling = (
   const [lastUpdated, setLastUpdated] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Используем useRef для хранения таймера и предыдущих данных
+  // Use useRef to store timer and previous data
   const timerRef = useRef(null);
   const previousDataRef = useRef(null);
   
-  // Флаг для отслеживания видимости страницы
+  // Flag to track page visibility
   const isVisibleRef = useRef(true);
   const isMountedRef = useRef(true);
   
-  // Последний раз, когда были обновлены данные
+  // Last update time
   const lastUpdateTimeRef = useRef(0);
   const fetchInProgressRef = useRef(false);
   
-  // Минимальный интервал между обновлениями данных (5 секунд)
+  // Minimum interval between updates (5 seconds)
   const minimumUpdateInterval = 5000;
 
-  // Функция для сравнения объектов (игнорируя last_checked)
+  // Function to compare objects (ignoring last_checked)
   const isDataChanged = useCallback((oldData, newData) => {
     if (!oldData || !newData) return true;
     
-    // Для массивов
+    // For arrays
     if (Array.isArray(oldData) && Array.isArray(newData)) {
       if (oldData.length !== newData.length) return true;
       
-      // Проверяем каждый элемент на значимые изменения
+      // Check each item for significant changes
       return newData.some((newItem, index) => {
         const oldItem = oldData[index];
         
-        // Если это элементы с id (товары)
+        // If these are items with id (products)
         if (newItem && oldItem && 'id' in newItem && 'id' in oldItem) {
-          // Если id не совпадают, значит данные изменились
+          // If ids don't match, data has changed
           if (newItem.id !== oldItem.id) return true;
           
-          // Проверяем только важные поля, игнорируя last_checked
+          // Check only important fields, ignore last_checked
           return (
             newItem.current_price !== oldItem.current_price ||
             newItem.desired_price !== oldItem.desired_price ||
@@ -63,14 +63,14 @@ const useDataPolling = (
           );
         }
         
-        // Для других элементов используем простое сравнение
+        // For other elements use simple comparison
         return JSON.stringify(oldItem) !== JSON.stringify(newItem);
       });
     }
     
-    // Для объектов (не массивов)
+    // For objects (not arrays)
     if (typeof oldData === 'object' && typeof newData === 'object') {
-      // Игнорируем поле last_checked при сравнении
+      // Ignore last_checked field when comparing
       const oldDataCopy = { ...oldData };
       const newDataCopy = { ...newData };
       
@@ -80,23 +80,23 @@ const useDataPolling = (
       return JSON.stringify(oldDataCopy) !== JSON.stringify(newDataCopy);
     }
     
-    // Для примитивов
+    // For primitives
     return oldData !== newData;
   }, []);
 
-  // Функция для загрузки данных
+  // Function to fetch data
   const fetchData = useCallback(async (force = false) => {
-    // Если загрузка уже идет, не начинаем новую
+    // If fetch is already in progress, don't start a new one
     if (fetchInProgressRef.current) {
       console.log('Fetch already in progress, skipping');
       return;
     }
     
-    // Проверяем, прошло ли достаточно времени с последнего обновления
+    // Check if enough time has passed since last update
     const now = Date.now();
     const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
     
-    // Если прошло меньше минимального интервала и это не принудительное обновление - не обновляем
+    // If less than minimum interval has passed and not forced - don't update
     if (!force && timeSinceLastUpdate < minimumUpdateInterval) {
       console.log(`Skipping update, last update was ${timeSinceLastUpdate}ms ago`);
       return;
@@ -105,11 +105,11 @@ const useDataPolling = (
     fetchInProgressRef.current = true;
     
     try {
-      // Для первой загрузки показываем полный индикатор загрузки
+      // For first load show full loading indicator
       if (data === null) {
         setLoading(true);
       } else {
-        // Для последующих загрузок показываем индикатор обновления
+        // For subsequent loads show refresh indicator
         setIsRefreshing(true);
       }
       
@@ -117,12 +117,12 @@ const useDataPolling = (
       
       const result = await fetchFunction();
       
-      // Если компонент размонтирован, не обновляем состояние
+      // If component is unmounted, don't update state
       if (!isMountedRef.current) return;
       
-      // Обновляем данные только если страница видима и данные изменились
+      // Update data only if page is visible and data has changed
       if (isVisibleRef.current) {
-        // Проверяем, реально ли изменились данные
+        // Check if data has actually changed
         if (isDataChanged(previousDataRef.current, result)) {
           console.log('Data changed, updating state');
           setData(result);
@@ -132,7 +132,7 @@ const useDataPolling = (
           console.log('Data did not change, skipping update');
         }
         
-        // Обновляем время последнего запроса в любом случае
+        // Update last request time in any case
         lastUpdateTimeRef.current = Date.now();
       }
     } catch (err) {
@@ -149,38 +149,38 @@ const useDataPolling = (
     }
   }, [fetchFunction, data, isDataChanged]);
 
-  // Запуск опроса при монтировании компонента и при изменении зависимостей
+  // Start polling on component mount and when dependencies change
   useEffect(() => {
     isMountedRef.current = true;
     
-    // Отслеживаем видимость страницы
+    // Track page visibility
     const handleVisibilityChange = () => {
       isVisibleRef.current = document.visibilityState === 'visible';
       
-      // Если страница стала видимой, сразу обновляем данные
+      // If page becomes visible, update data immediately
       if (isVisibleRef.current && enabled) {
-        fetchData(true); // Принудительное обновление при возвращении к странице
+        fetchData(true); // Force update when returning to page
       }
     };
     
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
-    // Первоначальная загрузка данных
+    // Initial data load
     if (enabled) {
       fetchData();
     }
     
-    // Настройка интервала для опроса, только если включено
+    // Setup interval for polling, only if enabled
     if (enabled) {
       timerRef.current = setInterval(() => {
-        // Проверяем, видима ли страница
+        // Check if page is visible
         if (isVisibleRef.current) {
           fetchData();
         }
       }, pollingInterval);
     }
     
-    // Очистка при размонтировании
+    // Cleanup on unmount
     return () => {
       isMountedRef.current = false;
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -192,7 +192,7 @@ const useDataPolling = (
     };
   }, [...dependencies, enabled, pollingInterval, fetchData]);
 
-  // Обновить данные принудительно
+  // Force data refresh
   const refetch = useCallback(() => {
     fetchData(true);
   }, [fetchData]);
