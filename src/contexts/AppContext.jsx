@@ -11,7 +11,7 @@ export const useAppState = () => {
   const [referralCode, setReferralCode] = useState(null);
   const isDevMode = import.meta.env.DEV;
 
-  // Извлечение реферального кода из URL, если он есть
+  // Extract referral code from URL if present
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const refCode = urlParams.get('ref');
@@ -19,7 +19,7 @@ export const useAppState = () => {
     if (refCode) {
       setReferralCode(refCode);
       
-      // Опционально: удаляем параметр ref из URL для чистоты
+      // Optionally: remove the ref parameter from URL for cleanliness
       const newUrl = window.location.pathname + 
         (urlParams.toString() ? 
           '?' + urlParams.toString().replace(/ref=[^&]*&?/, '') : 
@@ -28,13 +28,13 @@ export const useAppState = () => {
     }
   }, []);
 
-  // Инициализация пользователя
+  // Initialize user
   useEffect(() => {
     const init = async () => {
       try {
         setLoading(true);
         
-        // В режиме разработки используем тестовые данные
+        // In development mode use test data
         if (isDevMode) {
           const payload = {
             dev_mode: true,
@@ -43,7 +43,7 @@ export const useAppState = () => {
             first_name: 'Test User'
           };
           
-          // Добавляем реферальный код, если он есть
+          // Add referral code if present
           if (referralCode) {
             payload.referral_code = referralCode;
           }
@@ -56,7 +56,7 @@ export const useAppState = () => {
             setError(response.error || 'Failed to initialize user');
           }
         } else {
-          // В продакшене используем данные от Telegram WebApp
+          // In production use data from Telegram WebApp
           if (!WebApp.initData) {
             setError('Telegram WebApp data not available');
             return;
@@ -66,7 +66,7 @@ export const useAppState = () => {
             initData: WebApp.initData
           };
           
-          // Добавляем реферальный код, если он есть
+          // Add referral code if present
           if (referralCode) {
             payload.referral_code = referralCode;
           }
@@ -90,14 +90,14 @@ export const useAppState = () => {
     init();
   }, [isDevMode, referralCode]);
 
-  // Сообщаем Telegram, что приложение готово
+  // Tell Telegram the app is ready
   useEffect(() => {
     if (!loading && !isDevMode) {
       WebApp.ready();
     }
   }, [loading, isDevMode]);
 
-  // Настройка темы Telegram
+  // Set up Telegram theme
   useEffect(() => {
     if (!isDevMode) {
       WebApp.setHeaderColor('secondary_bg_color');
@@ -105,7 +105,7 @@ export const useAppState = () => {
     }
   }, [isDevMode]);
 
-  // Функция обновления данных пользователя с таймаутом на повтор
+  // Function to refresh user data with retry on failure
   const refreshUserData = async (retryCount = 0) => {
     if (!user || !user.telegram_id) return null;
     
@@ -115,13 +115,13 @@ export const useAppState = () => {
       
       if (userData.success) {
         console.log('User data refreshed successfully:', userData.user);
-        // Важно: обновляем локальное состояние пользователя
+        // Update local user state
         setUser(userData.user);
         return userData.user;
       } else {
         console.error('Failed to refresh user data:', userData.error);
         
-        // Если ошибка и это не последняя попытка, пробуем снова через 500 мс
+        // If error and not last retry, try again after 500ms
         if (retryCount < 3) {
           console.log(`Retrying refresh (attempt ${retryCount + 1}/3)...`);
           return new Promise((resolve) => {
@@ -136,7 +136,7 @@ export const useAppState = () => {
     } catch (error) {
       console.error('Error refreshing user data:', error);
       
-      // Если ошибка и это не последняя попытка, пробуем снова через 500 мс
+      // If error and not last retry, try again after 500ms
       if (retryCount < 3) {
         console.log(`Retrying refresh after error (attempt ${retryCount + 1}/3)...`);
         return new Promise((resolve) => {
