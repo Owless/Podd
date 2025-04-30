@@ -18,23 +18,25 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
   const isExpanded = item.id === expandedItemId;
 
   // Debugging - отслеживаем значимые изменения в товаре
-  useEffect(() => {
-    const prevItem = previousItemRef.current;
-    if (
-      prevItem.current_price !== item.current_price ||
-      prevItem.desired_price !== item.desired_price ||
-      prevItem.last_checked !== item.last_checked
-    ) {
-      console.log('Item updated:', {
-        id: item.id,
-        old_price: prevItem.current_price,
-        new_price: item.current_price,
-        last_checked: new Date(item.last_checked).toISOString(),
-        time: new Date().toISOString()
-      });
-      previousItemRef.current = { ...item };
-    }
-  }, [item]);
+useEffect(() => {
+  const prevItem = previousItemRef.current;
+  // Отслеживаем только реальные изменения цен
+  if (
+    prevItem.current_price !== item.current_price ||
+    prevItem.desired_price !== item.desired_price
+  ) {
+    console.log('Price changed:', {
+      id: item.id,
+      old_price: prevItem.current_price,
+      new_price: item.current_price,
+      time: new Date().toISOString()
+    });
+    previousItemRef.current = { ...item };
+  } else if (prevItem.last_checked !== item.last_checked) {
+    // Тихо обновляем ссылку без вывода в консоль
+    previousItemRef.current = { ...item };
+  }
+}, [item]);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('ru-RU', {
