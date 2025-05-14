@@ -34,15 +34,16 @@ const useDataPolling = (
   const lastUpdateTimeRef = useRef(0);
   const fetchInProgressRef = useRef(false);
   
-  // Minimum interval between updates (5 seconds)
-  const minimumUpdateInterval = 5000;
+  // Minimum interval between updates (3 seconds)
+  const minimumUpdateInterval = 3000;
 
-  // Function to compare objects (ignoring last_checked)
+  // Function to compare objects (ignoring last_checked and notification_sent)
   const isDataChanged = useCallback((oldData, newData) => {
     if (!oldData || !newData) return true;
     
-    // For arrays
+    // For arrays (like items list)
     if (Array.isArray(oldData) && Array.isArray(newData)) {
+      // Quick check: different lengths
       if (oldData.length !== newData.length) return true;
       
       // Check each item for significant changes
@@ -51,31 +52,63 @@ const useDataPolling = (
         
         // If these are items with id (products)
         if (newItem && oldItem && 'id' in newItem && 'id' in oldItem) {
-          // If ids don't match, data has changed
+          // If ids don't match or items are in different order, data has changed
           if (newItem.id !== oldItem.id) return true;
           
-          // Check only important fields, ignore last_checked
-          return (
-            newItem.current_price !== oldItem.current_price ||
-            newItem.desired_price !== oldItem.desired_price ||
-            newItem.notification_sent !== oldItem.notification_sent ||
-            newItem.title !== oldItem.title
-          );
+          // Check only important fields, ignore last_checked and notification_sent
+          const significantFields = [
+            'current_price',
+            'desired_price', 
+            'title',
+            'wildberries_id'
+          ];
+          
+          return significantFields.some(field => newItem[field] !== oldItem[field]);
         }
         
-        // For other elements use simple comparison
-        return JSON.stringify(oldItem) !== JSON.stringify(newItem);
+        // For non-item objects, do deep comparison excluding timestamps
+        if (typeof newItem === 'object' && typeof oldItem === 'object') {
+          const cleanOld = { ...oldItem };
+          const cleanNew = { ...newItem };
+          
+          // Remove timestamp fields
+          delete cleanOld.last_checked;
+          delete cleanNew.last_checked;
+          delete cleanOld.notification_sent;
+          delete cleanNew.notification_sent;
+          
+          return JSON.stringify(cleanOld) !== JSON.stringify(cleanNew);
+        }
+        
+        // For primitives use simple comparison
+        return newItem !== oldItem;
       });
     }
     
     // For objects (not arrays)
     if (typeof oldData === 'object' && typeof newData === 'object') {
-      // Ignore last_checked field when comparing
+      // Create copies without timestamp fields
       const oldDataCopy = { ...oldData };
       const newDataCopy = { ...newData };
       
-      if ('last_checked' in oldDataCopy) delete oldDataCopy.last_checked;
-      if ('last_checked' in newDataCopy) delete newDataCopy.last_checked;
+      // Remove fields that change frequently but aren't significant
+      delete oldDataCopy.last_checked;
+      delete newDataCopy.last_checked;
+      delete oldDataCopy.notification_sent;
+      delete newDataCopy.notification_sent;
+      
+      // For user objects, check subscription fields specifically
+      if ('subscription_active' in oldDataCopy && 'subscription_active' in newDataCopy) {
+        const significantFields = [
+          'subscription_active',
+          'subscription_end_date',
+          'telegram_id',
+          'username',
+          'first_name'
+        ];
+        
+        return significantFields.some(field => oldDataCopy[field] !== newDataCopy[field]);
+      }
       
       return JSON.stringify(oldDataCopy) !== JSON.stringify(newDataCopy);
     }
@@ -121,7 +154,7 @@ const useDataPolling = (
       if (!isMountedRef.current) return;
       
       // Update data only if page is visible and data has changed
-      if (isVisibleRef.current) {
+      if (isVisibleRef.current || data === null) {
         // Check if data has actually changed
         if (isDataChanged(previousDataRef.current, result)) {
           console.log('Data changed, updating state');
@@ -155,15 +188,32 @@ const useDataPolling = (
     
     // Track page visibility
     const handleVisibilityChange = () => {
-      isVisibleRef.current = document.visibilityState === 'visible';
+      const isVisible = document.visibilityState === 'visible';
+      isVisibleRef.current = isVisible;
       
-      // If page becomes visible, update data immediately
-      if (isVisibleRef.current && enabled) {
-        fetchData(true); // Force update when returning to page
+      // If page becomes visible and hasn't been updated in a while, update data
+      if (isVisible && enabled) {
+        const timeSinceLastUpdate = Date.now() - lastUpdateTimeRef.current;
+        // If more than 30 seconds have passed, force an update
+        if (timeSinceLastUpdate > 30000) {
+          fetchData(true);
+        }
+      }
+    };
+    
+    // Handle when app comes into focus
+    const handleFocus = () => {
+      if (enabled && isVisibleRef.current) {
+        const timeSinceLastUpdate = Date.now() - lastUpdateTimeRef.current;
+        // If more than 10 seconds have passed, force an update
+        if (timeSinceLastUpdate > 10000) {
+          fetchData(true);
+        }
       }
     };
     
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
     
     // Initial data load
     if (enabled) {
@@ -173,8 +223,8 @@ const useDataPolling = (
     // Setup interval for polling, only if enabled
     if (enabled) {
       timerRef.current = setInterval(() => {
-        // Check if page is visible
-        if (isVisibleRef.current) {
+        // Check if page is visible or if it's the first load
+        if (isVisibleRef.current || data === null) {
           fetchData();
         }
       }, pollingInterval);
@@ -184,6 +234,7 @@ const useDataPolling = (
     return () => {
       isMountedRef.current = false;
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
       
       if (timerRef.current) {
         clearInterval(timerRef.current);
