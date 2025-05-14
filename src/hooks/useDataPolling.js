@@ -1,14 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
- * Hook for periodic data polling with limited update frequency
- * and checking for real data changes
- * 
- * @param {Function} fetchFunction - Function to fetch data
- * @param {number} pollingInterval - Polling interval in milliseconds (default 60000 ms = 60 seconds)
- * @param {Array} dependencies - Dependencies that should trigger re-polling when changed
- * @param {boolean} enabled - Flag to enable or disable polling
- * @returns {Object} - Object with data, loading state, and error
+ * Hook for periodic data polling with optimized update detection
  */
 const useDataPolling = (
   fetchFunction,
@@ -34,10 +27,10 @@ const useDataPolling = (
   const lastUpdateTimeRef = useRef(0);
   const fetchInProgressRef = useRef(false);
   
-  // Minimum interval between updates (3 seconds)
-  const minimumUpdateInterval = 3000;
+  // Minimum interval between updates (5 seconds)
+  const minimumUpdateInterval = 5000;
 
-  // Function to compare objects (ignoring last_checked and notification_sent)
+  // Improved data comparison function
   const isDataChanged = useCallback((oldData, newData) => {
     if (!oldData || !newData) return true;
     
@@ -46,71 +39,86 @@ const useDataPolling = (
       // Quick check: different lengths
       if (oldData.length !== newData.length) return true;
       
-      // Check each item for significant changes
-      return newData.some((newItem, index) => {
-        const oldItem = oldData[index];
-        
-        // If these are items with id (products)
-        if (newItem && oldItem && 'id' in newItem && 'id' in oldItem) {
-          // If ids don't match or items are in different order, data has changed
-          if (newItem.id !== oldItem.id) return true;
-          
-          // Check only important fields, ignore last_checked and notification_sent
-          const significantFields = [
-            'current_price',
-            'desired_price', 
-            'title',
-            'wildberries_id'
-          ];
-          
-          return significantFields.some(field => newItem[field] !== oldItem[field]);
+      // Create maps for efficient comparison
+      const oldMap = new Map();
+      const newMap = new Map();
+      
+      oldData.forEach(item => {
+        if (item && item.id) {
+          oldMap.set(item.id, item);
         }
-        
-        // For non-item objects, do deep comparison excluding timestamps
-        if (typeof newItem === 'object' && typeof oldItem === 'object') {
-          const cleanOld = { ...oldItem };
-          const cleanNew = { ...newItem };
-          
-          // Remove timestamp fields
-          delete cleanOld.last_checked;
-          delete cleanNew.last_checked;
-          delete cleanOld.notification_sent;
-          delete cleanNew.notification_sent;
-          
-          return JSON.stringify(cleanOld) !== JSON.stringify(cleanNew);
-        }
-        
-        // For primitives use simple comparison
-        return newItem !== oldItem;
       });
+      
+      newData.forEach(item => {
+        if (item && item.id) {
+          newMap.set(item.id, item);
+        }
+      });
+      
+      // Check if items are different
+      if (oldMap.size !== newMap.size) return true;
+      
+      // Check each item for significant changes
+      for (const [id, newItem] of newMap) {
+        const oldItem = oldMap.get(id);
+        if (!oldItem) return true; // New item
+        
+        // Only check significant fields for items
+        const significantFields = [
+          'current_price',
+          'desired_price', 
+          'title',
+          'wildberries_id',
+          'notification_sent'
+        ];
+        
+        const hasChanges = significantFields.some(field => {
+          const oldValue = oldItem[field];
+          const newValue = newItem[field];
+          
+          // Handle numeric comparisons with small tolerance for floats
+          if (typeof oldValue === 'number' && typeof newValue === 'number') {
+            return Math.abs(oldValue - newValue) > 0.01;
+          }
+          
+          return oldValue !== newValue;
+        });
+        
+        if (hasChanges) return true;
+      }
+      
+      return false;
     }
     
-    // For objects (not arrays)
+    // For objects (not arrays) - like user objects
     if (typeof oldData === 'object' && typeof newData === 'object') {
       // Create copies without timestamp fields
-      const oldDataCopy = { ...oldData };
-      const newDataCopy = { ...newData };
+      const cleanOld = { ...oldData };
+      const cleanNew = { ...newData };
       
       // Remove fields that change frequently but aren't significant
-      delete oldDataCopy.last_checked;
-      delete newDataCopy.last_checked;
-      delete oldDataCopy.notification_sent;
-      delete newDataCopy.notification_sent;
+      const ignoredFields = ['last_checked', 'created_at', 'updated_at'];
+      ignoredFields.forEach(field => {
+        delete cleanOld[field];
+        delete cleanNew[field];
+      });
       
       // For user objects, check subscription fields specifically
-      if ('subscription_active' in oldDataCopy && 'subscription_active' in newDataCopy) {
-        const significantFields = [
+      if ('subscription_active' in cleanOld || 'subscription_active' in cleanNew) {
+        const significantUserFields = [
           'subscription_active',
           'subscription_end_date',
           'telegram_id',
           'username',
-          'first_name'
+          'first_name',
+          'items_count'
         ];
         
-        return significantFields.some(field => oldDataCopy[field] !== newDataCopy[field]);
+        return significantUserFields.some(field => cleanOld[field] !== cleanNew[field]);
       }
       
-      return JSON.stringify(oldDataCopy) !== JSON.stringify(newDataCopy);
+      // For other objects, do full comparison
+      return JSON.stringify(cleanOld) !== JSON.stringify(cleanNew);
     }
     
     // For primitives
@@ -139,7 +147,7 @@ const useDataPolling = (
     
     try {
       // For first load show full loading indicator
-      if (data === null) {
+      if (data === null || force) {
         setLoading(true);
       } else {
         // For subsequent loads show refresh indicator
@@ -153,20 +161,20 @@ const useDataPolling = (
       // If component is unmounted, don't update state
       if (!isMountedRef.current) return;
       
-      // Update data only if page is visible and data has changed
-      if (isVisibleRef.current || data === null) {
+      // Update data only if page is visible or it's the first load
+      if (isVisibleRef.current || data === null || force) {
         // Check if data has actually changed
-        if (isDataChanged(previousDataRef.current, result)) {
+        if (force || isDataChanged(previousDataRef.current, result)) {
           console.log('Data changed, updating state');
           setData(result);
           previousDataRef.current = result;
           setLastUpdated(new Date());
         } else {
-          console.log('Data did not change, skipping update');
+          console.log('Data unchanged, skipping state update');
         }
         
         // Update last request time in any case
-        lastUpdateTimeRef.current = Date.now();
+        lastUpdateTimeRef.current = now;
       }
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -191,11 +199,11 @@ const useDataPolling = (
       const isVisible = document.visibilityState === 'visible';
       isVisibleRef.current = isVisible;
       
-      // If page becomes visible and hasn't been updated in a while, update data
+      // If page becomes visible and data is stale, update data
       if (isVisible && enabled) {
         const timeSinceLastUpdate = Date.now() - lastUpdateTimeRef.current;
-        // If more than 30 seconds have passed, force an update
-        if (timeSinceLastUpdate > 30000) {
+        // If more than 1 minute has passed, force an update
+        if (timeSinceLastUpdate > pollingInterval) {
           fetchData(true);
         }
       }
@@ -205,9 +213,9 @@ const useDataPolling = (
     const handleFocus = () => {
       if (enabled && isVisibleRef.current) {
         const timeSinceLastUpdate = Date.now() - lastUpdateTimeRef.current;
-        // If more than 10 seconds have passed, force an update
-        if (timeSinceLastUpdate > 10000) {
-          fetchData(true);
+        // If more than 30 seconds have passed, update data
+        if (timeSinceLastUpdate > 30000) {
+          fetchData(false);
         }
       }
     };
@@ -217,15 +225,15 @@ const useDataPolling = (
     
     // Initial data load
     if (enabled) {
-      fetchData();
+      fetchData(true);
     }
     
     // Setup interval for polling, only if enabled
-    if (enabled) {
+    if (enabled && pollingInterval > 0) {
       timerRef.current = setInterval(() => {
-        // Check if page is visible or if it's the first load
-        if (isVisibleRef.current || data === null) {
-          fetchData();
+        // Only poll if page is visible and not already fetching
+        if (isVisibleRef.current && !fetchInProgressRef.current) {
+          fetchData(false);
         }
       }, pollingInterval);
     }
@@ -241,10 +249,11 @@ const useDataPolling = (
         timerRef.current = null;
       }
     };
-  }, [...dependencies, enabled, pollingInterval, fetchData]);
+  }, [...dependencies, enabled, pollingInterval]);
 
   // Force data refresh
   const refetch = useCallback(() => {
+    console.log('Manual refetch requested');
     fetchData(true);
   }, [fetchData]);
 
