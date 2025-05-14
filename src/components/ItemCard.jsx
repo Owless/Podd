@@ -88,6 +88,7 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
   };
 
   const handleDeleteClick = (e) => {
+    e.preventDefault();
     e.stopPropagation();
     if (window.confirm('Удалить товар из отслеживания?')) {
       onDelete(item.id);
@@ -144,10 +145,11 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
 
   return (
     <div className="relative mb-3 overflow-hidden rounded-lg bg-white shadow-sm">
-      <div
+      <button
         ref={deleteBtnRef}
-        className="absolute top-0 right-0 h-full w-20 bg-red-500 flex items-center justify-center text-white"
+        className="absolute top-0 right-0 h-full w-20 bg-red-500 flex items-center justify-center text-white cursor-pointer"
         onClick={handleDeleteClick}
+        style={{ pointerEvents: position < -SWIPE_THRESHOLD ? 'auto' : 'none' }}
       >
         <div className="flex flex-col items-center">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,7 +157,7 @@ const ItemCard = ({ item, onDelete, expandedItemId, setExpandedItemId }) => {
           </svg>
           <span className="text-xs mt-1">Удалить</span>
         </div>
-      </div>
+      </button>
 
       <div
         ref={cardRef}
