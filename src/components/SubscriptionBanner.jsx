@@ -531,7 +531,7 @@ const SubscriptionBanner = () => {
             <p className="text-purple-700 leading-relaxed">
               Отслеживайте <span className="font-semibold">один товар</span> бесплатно
             </p>
-        
+        </div>
         <div className="flex flex-col gap-3 md:items-end">
           <button
             type="button"
