@@ -158,7 +158,7 @@ const ProfilePage = () => {
                 <div>
                   <h3 className="font-bold text-purple-800 dark:text-purple-300">Реферальная программа</h3>
                   <p className="text-sm text-purple-700 dark:text-purple-400">
-                    Пригласите друзей и получите до {referralInfo.total_referrals} дней бесплатной подписки
+                    Пригласите друзей и получите до 30 дней бесплатной подписки
                   </p>
                 </div>
                 <div className="text-purple-800 dark:text-purple-300">
