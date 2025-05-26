@@ -127,7 +127,7 @@ const ProfilePage = () => {
           <div className="max-w-4xl mx-auto space-y-6">
             
             {/* User Profile Card */}
-            <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 overflow-hidden transform hover:scale-[1.02] transition-all duration-300">
+            <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 overflow-hidden transform hover:shadow-2xl transition-all duration-300">
               {/* Gradient header */}
               <div className="h-2 bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500"></div>
               
@@ -138,7 +138,6 @@ const ProfilePage = () => {
                     <div className="bg-gradient-to-br from-purple-500 to-blue-600 text-white rounded-2xl w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center text-2xl sm:text-3xl font-bold shadow-lg">
                       {user?.first_name?.charAt(0) || 'U'}
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white dark:border-gray-800 shadow-sm"></div>
                   </div>
                   
                   <div className="flex-1">
@@ -148,12 +147,7 @@ const ProfilePage = () => {
                     {user?.username && (
                       <p className="text-gray-600 dark:text-gray-400 font-medium">@{user.username}</p>
                     )}
-                    <div className="flex items-center mt-2 text-sm text-gray-500 dark:text-gray-400">
-                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                      </svg>
-                      Активен сейчас
-                    </div>
+
                   </div>
                 </div>
                 
@@ -162,7 +156,7 @@ const ProfilePage = () => {
                   
                   {/* Subscription Status */}
                   <div 
-                    className="group bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/50 dark:to-blue-900/50 p-4 sm:p-6 rounded-xl cursor-pointer border border-purple-200/50 dark:border-purple-700/50 hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
+                    className="group bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/50 dark:to-blue-900/50 p-4 sm:p-6 rounded-xl cursor-pointer border border-purple-200/50 dark:border-purple-700/50 hover:shadow-md transition-all duration-200"
                     onClick={goToSubscription}
                   >
                     <div className="flex items-center justify-between">
@@ -179,7 +173,7 @@ const ProfilePage = () => {
                           {subStatus.text}
                         </div>
                       </div>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600 dark:text-purple-400 group-hover:translate-x-1 transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600 dark:text-purple-400 transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                       </svg>
                     </div>
@@ -208,7 +202,7 @@ const ProfilePage = () => {
                 {/* Referral Program */}
                 {referralInfo && (
                   <div 
-                    className="group bg-gradient-to-br from-purple-100 via-blue-100 to-indigo-100 dark:from-purple-900/60 dark:via-blue-900/60 dark:to-indigo-900/60 p-4 sm:p-6 rounded-xl cursor-pointer border border-purple-200/50 dark:border-purple-700/50 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
+                    className="group bg-gradient-to-br from-purple-100 via-blue-100 to-indigo-100 dark:from-purple-900/60 dark:via-blue-900/60 dark:to-indigo-900/60 p-4 sm:p-6 rounded-xl cursor-pointer border border-purple-200/50 dark:border-purple-700/50 shadow-sm hover:shadow-md transition-all duration-200"
                     onClick={goToReferrals}
                   >
                     <div className="flex items-center justify-between">
@@ -226,7 +220,7 @@ const ProfilePage = () => {
                         </div>
                       </div>
                       <div className="text-purple-800 dark:text-purple-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 group-hover:translate-x-1 transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                         </svg>
                       </div>
@@ -254,28 +248,8 @@ const ProfilePage = () => {
                 
                 <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed text-sm sm:text-base">
                   Трекер цен Wildberries позволяет отслеживать изменения цен на товары и получать уведомления 
-                  о снижении цены или достижении желаемой стоимости. Экономьте время и деньги с умными уведомлениями.
+                  о снижении цены или достижении желаемой стоимости.
                 </p>
-                
-                {/* Features */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-gradient-to-r from-green-400 to-green-600 rounded-full"></div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Мгновенные уведомления</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"></div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">История изменений</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-gradient-to-r from-purple-400 to-purple-600 rounded-full"></div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Гибкие настройки</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-gradient-to-r from-pink-400 to-pink-600 rounded-full"></div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Безопасность данных</span>
-                  </div>
-                </div>
                 
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
