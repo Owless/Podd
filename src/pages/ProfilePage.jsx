@@ -126,31 +126,29 @@ const ProfilePage = () => {
         <div className="container mx-auto px-4 py-6 pb-24">
           <div className="max-w-4xl mx-auto space-y-6">
             
-{/* User Profile Card - Inline Version */}
-<div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 overflow-hidden transform hover:shadow-2xl transition-all duration-300">
-  {/* Gradient header */}
-  <div className="h-2 bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500"></div>
-  
-  <div className="p-6 sm:p-8">
-    {/* User info - Single row */}
-    <div className="flex items-center space-x-6 mb-8">
-      <div className="relative">
-        <div className="bg-gradient-to-br from-purple-500 to-blue-600 text-white rounded-2xl w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center text-2xl sm:text-3xl font-bold shadow-lg">
-          {user?.first_name?.charAt(0) || 'U'}
-        </div>
-      </div>
-      
-      <div className="flex-1">
-        <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-1">
-          {user?.first_name || 'Пользователь'}
-        </h1>
-        {user?.username && (
-          <p className="text-gray-600 dark:text-gray-400 font-medium">@{user.username}</p>
-        )}
-      </div>
-    </div>
-  </div>
-</div>
+            {/* User Profile Card - Inline Version */}
+            <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 overflow-hidden transform hover:shadow-2xl transition-all duration-300">
+              {/* Gradient header */}
+              <div className="h-2 bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500"></div>
+              
+              <div className="p-6 sm:p-8">
+                {/* User info - Single row */}
+                <div className="flex items-center space-x-6 mb-8">
+                  <div className="relative">
+                    <div className="bg-gradient-to-br from-purple-500 to-blue-600 text-white rounded-2xl w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center text-2xl sm:text-3xl font-bold shadow-lg">
+                      {user?.first_name?.charAt(0) || 'U'}
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-1">
+                      {user?.first_name || 'Пользователь'}
+                    </h1>
+                    {user?.username && (
+                      <p className="text-gray-600 dark:text-gray-400 font-medium">@{user.username}</p>
+                    )}
+                  </div>
+                </div>
                 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
