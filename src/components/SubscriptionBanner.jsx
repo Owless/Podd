@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import WebApp from '@twa-dev/sdk';
 import { useApp } from '../contexts/AppContext';
@@ -230,8 +229,8 @@ const SubscriptionBanner = () => {
           </div>
         </div>
 
-        {/* Plans container */}
-        <div className="p-6">
+        {/* Plans container with padding bottom */}
+        <div className="p-6 pb-8">
           {plans && (
             <div className="space-y-4 mb-6">
               {Object.values(plans).map((plan, index) => (
@@ -356,8 +355,8 @@ const SubscriptionBanner = () => {
             </div>
           )}
           
-          {/* Action buttons */}
-          <div className="flex gap-3">
+          {/* Action buttons with extra margin bottom */}
+          <div className="flex gap-3 mb-4">
             <button
               onClick={handleClosePlans}
               className="flex-1 py-4 px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-200 hover:scale-105"
