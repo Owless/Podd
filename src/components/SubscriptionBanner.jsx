@@ -502,33 +502,92 @@ const SubscriptionBanner = () => {
     );
   }
   
-  // Base banner view (no subscription and not in plan selection mode)
+// Base banner view (no subscription)
   return (
-    <div className="bg-white rounded-xl p-5 shadow-md border border-purple-200 bg-purple-50 mb-6">
-      <div className="flex flex-col md:flex-row md:items-center gap-4">
+    <div className="relative overflow-hidden rounded-2xl p-6 shadow-lg border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50 mb-6 transition-all duration-300 hover:shadow-xl">
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-40 h-40 bg-purple-200 rounded-full opacity-20 transform translate-x-20 -translate-y-20"></div>
+      <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-200 rounded-full opacity-20 transform -translate-x-16 translate-y-16"></div>
+      
+      <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-4">
         <div className="flex-1">
-          <div className="flex items-center">
-            <svg className="w-5 h-5 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h3 className="font-semibold text-purple-800">Бесплатный режим</h3>
+          <div className="flex items-center mb-3">
+            <div className="bg-purple-100 rounded-full p-3 mr-4">
+              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            
+            <div>
+              <h3 className="font-bold text-xl text-purple-800 mb-1">Бесплатный режим</h3>
+              <div className="flex items-center">
+                <span className="bg-purple-200 text-purple-800 text-xs font-semibold px-2 py-1 rounded-full">
+                  Базовый план
+                </span>
+              </div>
+            </div>
           </div>
           
-          <p className="text-sm text-purple-700 mt-1 mb-3 md:mb-0">
-            Вы можете отслеживать только один товар. Оформите подписку для отслеживания большего количества товаров.
-          </p>
+          <div className="space-y-2 mb-4">
+            <p className="text-purple-700 leading-relaxed">
+              Отслеживайте <span className="font-semibold">один товар</span> бесплатно
+            </p>
+            
+            <div className="bg-white bg-opacity-50 rounded-lg p-3 border border-purple-200">
+              <h4 className="font-semibold text-purple-800 text-sm mb-2">С подпиской Premium получите:</h4>
+              <ul className="space-y-1 text-sm text-purple-700">
+                <li className="flex items-center">
+                  <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Отслеживание неограниченного количества товаров
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Мгновенные уведомления о снижении цен
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Подробная аналитика и история цен
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Приоритетная поддержка
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
         
-        <button
-          type="button"
-          onClick={handleOpenPlans}
-          className="py-3 px-5 bg-purple-800 hover:bg-purple-900 text-white font-medium rounded-xl text-sm whitespace-nowrap flex items-center justify-center gap-2"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 11V9a2 2 0 00-2-2m2 4v4a2 2 0 104 0v-1m-4-3H9m2 0h4m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Оформить подписку
-        </button>
+        <div className="flex flex-col gap-3 md:items-end">
+          <button
+            type="button"
+            onClick={handleOpenPlans}
+            className="group py-4 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-3 whitespace-nowrap"
+          >
+            <div className="bg-white bg-opacity-20 rounded-full p-2 group-hover:bg-opacity-30 transition-all duration-300">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div className="text-left">
+              <div className="text-sm font-bold">Оформить подписку</div>
+              <div className="text-xs text-purple-100">Получить Premium</div>
+            </div>
+          </button>
+          
+          <div className="text-center text-xs text-purple-600">
+            <span className="bg-white bg-opacity-60 rounded-full px-3 py-1">
+              💎 Начните экономить уже сегодня
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
