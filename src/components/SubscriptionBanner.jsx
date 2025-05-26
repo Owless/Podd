@@ -513,7 +513,7 @@ return (
         <div className="flex items-center mb-3">
           <div className="bg-purple-100 rounded-full p-3 mr-4">
             <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 20 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
           
@@ -527,11 +527,27 @@ return (
           </div>
         </div>
         
-        <div className="space-y-2 mb-4">
-          <p className="text-purple-700 leading-relaxed">
-            Отслеживайте <span className="font-semibold">один товар</span> бесплатно
-          </p>
-        </div>
+        <p className="text-purple-700 leading-relaxed">
+          Отслеживайте <span className="font-semibold">один товар</span> бесплатно
+        </p>
+      </div>
+      
+      <div className="flex flex-col gap-3 md:items-end">
+        <button
+          type="button"
+          onClick={handleOpenPlans}
+          className="group py-4 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-3 whitespace-nowrap"
+        >
+          <div className="bg-white bg-opacity-20 rounded-full p-2 group-hover:bg-opacity-30 transition-all duration-300">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div className="text-left">
+            <div className="text-sm font-bold">Оформить подписку</div>
+            <div className="text-xs text-purple-100">Получить Premium</div>
+          </div>
+        </button>
       </div>
     </div>
   </div>
