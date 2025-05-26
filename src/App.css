@@ -1,19 +1,47 @@
 :root {
+  /* Светлая тема (по умолчанию) */
   --wb-purple: #8e44ad;
   --wb-purple-dark: #6c3483;
   --wb-purple-light: #f5eef8;
   --error-color: #e74c3c;
   --text-color: #333;
+  --text-secondary: #666;
   --light-gray: #f5f5f5;
+  --bg-color: #ffffff;
+  --card-bg: #ffffff;
   --border-color: #e0e0e0;
   --border-radius: 12px;
   --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --input-bg: #f9f9f9;
+  --btn-secondary-bg: #f9f9f9;
+  --btn-secondary-hover: #f0f0f0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Темная тема */
+    --wb-purple: #9b59b6;
+    --wb-purple-dark: #8e44ad;
+    --wb-purple-light: #2d0a3d;
+    --error-color: #ff6b6b;
+    --text-color: #f0f0f0;
+    --text-secondary: #b0b0b0;
+    --light-gray: #121212;
+    --bg-color: #1e1e1e;
+    --card-bg: #2d2d2d;
+    --border-color: #444;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    --input-bg: #333;
+    --btn-secondary-bg: #333;
+    --btn-secondary-hover: #444;
+  }
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 body {
@@ -28,6 +56,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--bg-color);
 }
 
 /* Header */
@@ -58,11 +87,13 @@ body {
 .btn-primary {
   background-color: var(--wb-purple);
   color: white;
-  border-radius: 12px;
+  border-radius: var(--border-radius);
   padding: 12px 20px;
   font-weight: 500;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
 }
 
 .btn-primary:hover {
@@ -71,31 +102,32 @@ body {
 }
 
 .btn-secondary {
-  background-color: #f9f9f9;
-  color: #333;
-  border-radius: 12px;
+  background-color: var(--btn-secondary-bg);
+  color: var(--text-color);
+  border-radius: var(--border-radius);
   padding: 12px 20px;
   font-weight: 500;
-  border: 1px solid #e6e6e6;
+  border: 1px solid var(--border-color);
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .btn-secondary:hover {
-  background-color: #f0f0f0;
+  background-color: var(--btn-secondary-hover);
 }
 
 /* Карточки */
 .card {
-  background-color: white;
-  border-radius: 16px;
+  background-color: var(--card-bg);
+  border-radius: calc(var(--border-radius) + 4px);
   padding: 16px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow);
   transition: all 0.3s ease;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border-color);
 }
 
 .card:hover {
-  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.2);
   transform: translateY(-2px);
 }
 
@@ -103,11 +135,12 @@ body {
 .input {
   width: 100%;
   padding: 14px 16px;
-  border-radius: 12px;
-  border: 1px solid #e0e0e0;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
   font-size: 16px;
   transition: all 0.3s ease;
-  background-color: #f9f9f9;
+  background-color: var(--input-bg);
+  color: var(--text-color);
 }
 
 .input:focus {
@@ -130,6 +163,15 @@ body {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Дополнительные стили для темной темы */
+.error-message {
+  color: var(--error-color);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
 }
 
 /* Адаптивность */
