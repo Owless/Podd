@@ -64,8 +64,8 @@ const ReferralsPage = () => {
   if (userLoading || loading) {
     return (
       <Layout>
-        <div className="flex justify-center items-center min-h-screen">
-          <div className="w-10 h-10 border-2 border-purple-800 border-t-transparent rounded-full animate-spin"></div>
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-purple-900 dark:to-gray-800 flex justify-center items-center">
+          <div className="w-10 h-10 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
         </div>
       </Layout>
     );
@@ -74,91 +74,174 @@ const ReferralsPage = () => {
   if (error) {
     return (
       <Layout>
-        <ErrorMessage message={error} />
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-purple-900 dark:to-gray-800">
+          <ErrorMessage message={error} />
+        </div>
       </Layout>
     );
   }
 
   return (
     <Layout>
-      <header className="mb-6">
-        <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-          Пригласи друзей и получи бонус
-        </h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Делись ссылкой с друзьями и получай дополнительные дни подписки
-        </p>
-      </header>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-purple-900 dark:to-gray-800">
+        <div className="container mx-auto px-4 py-6 pb-24">
+          <div className="max-w-4xl mx-auto space-y-6">
+            
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 dark:from-purple-400 dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent mb-3">
+                Пригласи друзей и получи бонус
+              </h1>
+              <p className="text-gray-600 dark:text-gray-300 text-lg">
+                Делись ссылкой с друзьями и получай дополнительные дни подписки
+              </p>
+            </div>
 
-      {copyNotification && (
-        <div className="fixed top-4 right-4 bg-purple-800 text-white px-4 py-2 rounded-md shadow-lg z-50 transition-opacity duration-300">
-          {copyNotification}
-        </div>
-      )}
+            {/* Copy Notification */}
+            {copyNotification && (
+              <div className="fixed top-4 right-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-3 rounded-xl shadow-xl z-50 transition-all duration-300 animate-pulse">
+                <div className="flex items-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="font-medium">{copyNotification}</span>
+                </div>
+              </div>
+            )}
 
-      <div className="bg-purple-800 rounded-xl shadow-md p-6 mb-6 text-white">
-        <h2 className="text-xl font-semibold mb-4">Твоя реферальная ссылка</h2>
-        <div className="flex flex-col gap-4 mb-4">
-          <div>
-            <input
-              type="text"
-              value={referralData.referral_link}
-              className="w-full p-3 border border-purple-700 rounded-lg bg-purple-700 text-white placeholder-purple-300"
-              readOnly
-            />
-          </div>
-          
-          <button
-            onClick={() => copyToClipboard(referralData.referral_link, 'Ссылка')}
-            className="w-full bg-white text-purple-800 py-3 px-4 rounded-lg text-center font-bold hover:bg-gray-100 transition-colors"
-          >
-            Скопировать ссылку
-          </button>
-        </div>
-      </div>
+            {/* Referral Link Card */}
+            <div className="bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 rounded-2xl shadow-xl p-6 sm:p-8 text-white relative overflow-hidden">
+              {/* Background decoration */}
+              <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20"></div>
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-16 -translate-x-16"></div>
+              
+              <div className="relative z-10">
+                <div className="flex items-center mb-6">
+                  <div className="bg-white/20 p-3 rounded-xl mr-4">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-bold">Твоя реферальная ссылка</h2>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                    <input
+                      type="text"
+                      value={referralData.referral_link}
+                      className="w-full bg-transparent text-white placeholder-white/70 outline-none text-sm sm:text-base"
+                      readOnly
+                    />
+                  </div>
+                  
+                  <button
+                    onClick={() => copyToClipboard(referralData.referral_link, 'Ссылка')}
+                    className="w-full bg-white text-purple-600 py-4 px-6 rounded-xl font-bold hover:bg-gray-50 transition-all duration-200 transform hover:scale-105 shadow-lg"
+                  >
+                    <div className="flex items-center justify-center space-x-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                      </svg>
+                      <span>Скопировать ссылку</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Твоя статистика рефералов</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-purple-100 p-4 rounded-xl text-center">
-            <span className="block text-2xl font-bold text-purple-800">{referralData.total_referrals}</span>
-            <span className="text-purple-800">Всего рефералов</span>
-          </div>
-          <div className="bg-purple-100 p-4 rounded-xl text-center">
-            <span className="block text-2xl font-bold text-purple-800">{referralData.earned_days}</span>
-            <span className="text-purple-800">Заработано дней</span>
-          </div>
-        </div>
-      </div>
+            {/* Statistics Card */}
+            <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 overflow-hidden">
+              <div className="h-2 bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500"></div>
+              
+              <div className="p-6 sm:p-8">
+                <div className="flex items-center mb-6">
+                  <div className="bg-gradient-to-br from-purple-500 to-blue-500 p-3 rounded-xl mr-4 shadow-sm">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+                    Твоя статистика рефералов
+                  </h2>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 p-6 rounded-xl border border-purple-200/50 dark:border-purple-700/50">
+                    <div className="text-center">
+                      <div className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400 bg-clip-text text-transparent mb-2">
+                        {referralData.total_referrals}
+                      </div>
+                      <div className="text-gray-600 dark:text-gray-300 font-medium">Всего рефералов</div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 p-6 rounded-xl border border-indigo-200/50 dark:border-indigo-700/50">
+                    <div className="text-center">
+                      <div className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent mb-2">
+                        {referralData.earned_days}
+                      </div>
+                      <div className="text-gray-600 dark:text-gray-300 font-medium">Заработано дней</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-20">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Как это работает</h2>
-        <div className="space-y-6">
-          <div className="flex items-start">
-            <div className="bg-purple-100 rounded-full h-10 w-10 flex items-center justify-center mr-4 shrink-0">
-              <span className="font-bold text-purple-800">1</span>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-800">Поделись ссылкой</h3>
-              <p className="text-gray-600 mt-1">Отправь уникальную реферальную ссылку друзьям через любой мессенджер</p>
-            </div>
-          </div>
-          <div className="flex items-start">
-            <div className="bg-purple-100 rounded-full h-10 w-10 flex items-center justify-center mr-4 shrink-0">
-              <span className="font-bold text-purple-800">2</span>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-800">При входе в приложение</h3>
-              <p className="text-gray-600 mt-1">Когда друг регистрируется по твоей ссылке, вы оба получаете 5 дней бесплатной подписки</p>
-            </div>
-          </div>
-          <div className="flex items-start">
-            <div className="bg-purple-100 rounded-full h-10 w-10 flex items-center justify-center mr-4 shrink-0">
-              <span className="font-bold text-purple-800">3</span>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-800">Дополнительный бонус</h3>
-              <p className="text-gray-600 mt-1">При оформлении другом подписки на год ты получишь 30 дней бесплатной подписки</p>
+            {/* How it works Card */}
+            <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 overflow-hidden">
+              <div className="h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+              
+              <div className="p-6 sm:p-8">
+                <div className="flex items-center mb-8">
+                  <div className="bg-gradient-to-br from-indigo-500 to-purple-500 p-3 rounded-xl mr-4 shadow-sm">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+                    Как это работает
+                  </h2>
+                </div>
+                
+                <div className="space-y-8">
+                  <div className="flex items-start">
+                    <div className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-full h-12 w-12 flex items-center justify-center mr-6 shrink-0 shadow-lg">
+                      <span className="font-bold text-white text-lg">1</span>
+                    </div>
+                    <div className="flex-1 pt-2">
+                      <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200 mb-2">Поделись ссылкой</h3>
+                      <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                        Отправь уникальную реферальную ссылку друзьям через любой мессенджер
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start">
+                    <div className="bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full h-12 w-12 flex items-center justify-center mr-6 shrink-0 shadow-lg">
+                      <span className="font-bold text-white text-lg">2</span>
+                    </div>
+                    <div className="flex-1 pt-2">
+                      <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200 mb-2">При входе в приложение</h3>
+                      <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                        Когда друг регистрируется по твоей ссылке, вы оба получаете 5 дней бесплатной подписки
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start">
+                    <div className="bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full h-12 w-12 flex items-center justify-center mr-6 shrink-0 shadow-lg">
+                      <span className="font-bold text-white text-lg">3</span>
+                    </div>
+                    <div className="flex-1 pt-2">
+                      <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200 mb-2">Дополнительный бонус</h3>
+                      <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                        При оформлении другом подписки на год ты получишь 30 дней бесплатной подписки
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
